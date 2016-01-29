@@ -49,6 +49,12 @@ def library_artist(artist):
     return render_template_with_args("artist.html", artist=artist)
 
 
+@app.route('/library/<artist>/<album>/')
+@requires_auth
+def library_artist_album(artist, album):
+    return render_template_with_args("album.html", artist=artist, album=album)
+
+
 @app.route('/pause/')
 @requires_auth
 def pause():
