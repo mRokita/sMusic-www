@@ -106,7 +106,7 @@ def handle_client(conn, addr):
 
 def main():
     bind_socket = socket.socket()
-    bind_socket.bind(('localhost', config.listen_port))
+    bind_socket.bind((config.listen_host, config.listen_port))
     bind_socket.listen(5)
     conns = []
     try:
