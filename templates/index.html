@@ -7,5 +7,14 @@
 <body>
     <a href="pause">pause</a><br />
     <a href="play">play</a><br />
+    {% set status = radio_utils.get_status() %}
+    Tytuł: {{ status["title"] }}<br />
+    Album: {{ status["album"] }}<br />
+    Wykonawca: {{ status["artist"] }}<br />
+    Plik: {{ status["file"] }}
+    <br />
+    {% for val in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] %}
+    <a href="vol/{{val}}">{{val}}</a>
+    {% endfor %}
 </body>
 </html>

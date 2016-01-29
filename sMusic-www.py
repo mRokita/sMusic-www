@@ -10,6 +10,8 @@ def check_auth(username, password):
     """
     return username == 'admin' and password == 'secret'
 
+def render_template_with_args(template):
+    return render_template(template, radio_utils=radio_utils)
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
@@ -32,7 +34,7 @@ def requires_auth(f):
 @app.route('/')
 @requires_auth
 def hello_world():
-    return render_template("index.html")
+    return render_template_with_args("index.html")
 
 
 @app.route('/pause')
@@ -41,6 +43,10 @@ def pause():
     radio_utils.pause()
     return redirect('/')
 
+@app.route('/vol/<value>')
+def vol(value):
+    radio_utils.set_vol(value)
+    return redirect("/")
 
 @app.route('/play')
 @requires_auth
@@ -49,4 +55,5 @@ def play():
     return redirect('/')
 
 if __name__ == '__main__':
-    app.run()
+    app.debug = True
+    app.run(host="mrokita.pl")
