@@ -10,8 +10,8 @@ def check_auth(username, password):
     """
     return username == 'admin' and password == 'secret'
 
-def render_template_with_args(template):
-    return render_template(template, radio_utils=radio_utils)
+def render_template_with_args(template, **kwargs):
+    return render_template(template, radio_utils=radio_utils, **kwargs)
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
@@ -37,18 +37,31 @@ def hello_world():
     return render_template_with_args("index.html")
 
 
-@app.route('/pause')
+@app.route('/library/')
+@requires_auth
+def library():
+    return render_template_with_args("library.html")
+
+
+@app.route('/library/<artist>/')
+@requires_auth
+def library_artist(artist):
+    return render_template_with_args("artist.html", artist=artist)
+
+
+@app.route('/pause/')
 @requires_auth
 def pause():
     radio_utils.pause()
     return redirect('/')
 
-@app.route('/vol/<value>')
+@app.route('/vol/<value>/')
+@requires_auth
 def vol(value):
     radio_utils.set_vol(value)
     return redirect("/")
 
-@app.route('/play')
+@app.route('/play/')
 @requires_auth
 def play():
     radio_utils.play()

@@ -25,9 +25,30 @@ def send_for_result(dct):
     return json.loads(b64decode(buff[:-1]))
 
 
+def get_artists():
+    return send_for_result({"request": "get_artists"})["artists"]
+
+
+def get_albums(artist=None):
+    return send_for_result({"request": "get_albums", "artist": artist})["albums"]
+
+
+def get_tracks(artist=None, album=None):
+    return send_for_result({"request": "get_tracks", "artist": artist, "album": album})["tracks"]
+
+
+def get_status():
+    return send_for_result({"request": "status"})["status"]
+
+
+def set_vol(value):
+    send_for_result({"request": "set_vol", "value": value})
+
+
 def play():
-    send_for_result({"request": "play"})
+    return send_for_result({"request": "play"})["status"]
 
 
 def pause():
-    send_for_result({"request": "pause"})
+    return send_for_result({"request": "pause"})["status"]
+

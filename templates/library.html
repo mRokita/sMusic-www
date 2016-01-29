@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>sMusic-www - Minimal Preview</title>
+</head>
+<body>
+    <a href="..">..</a><br />
+    {% set artists = radio_utils.get_artists() %}
+    {% for name in artists %}
+    <a href="/library/{{artists[name]}}">{{ name }}</a><br />
+    {% endfor %}
+</body>
+</html>
