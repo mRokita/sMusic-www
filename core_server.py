@@ -101,6 +101,7 @@ def handle_client(conn, addr):
                 print e
 
         msg = conn.read()
+    conn.close()
     print "%s:%s has disconnected" % addr
 
 

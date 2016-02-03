@@ -22,33 +22,38 @@ def send_for_result(dct):
     buff = ""
     while len(buff) == 0 or not buff[-1] == "\n":
         buff += conn.read()
+    conn.close()
     return json.loads(b64decode(buff[:-1]))
 
 
 def get_artists():
-    return send_for_result({"request": "get_artists"})["artists"]
+    return send_for_result({"request": "get_artists"})
 
 
 def get_albums(artist=None):
-    return send_for_result({"request": "get_albums", "artist": artist})["albums"]
+    return send_for_result({"request": "get_albums", "artist": artist})
 
 
 def get_tracks(artist=None, album=None):
-    return send_for_result({"request": "get_tracks", "artist": artist, "album": album})["tracks"]
+    return send_for_result({"request": "get_tracks", "artist": artist, "album": album})
+
+
+def get_current_queue():
+    return send_for_result({"request": "get_current_queue"})
 
 
 def get_status():
-    return send_for_result({"request": "status"})["status"]
+    return send_for_result({"request": "status"})
 
 
 def set_vol(value):
-    send_for_result({"request": "set_vol", "value": value})
+    return send_for_result({"request": "set_vol", "value": value})
 
 
 def play():
-    return send_for_result({"request": "play"})["status"]
+    return send_for_result({"request": "play"})
 
 
 def pause():
-    return send_for_result({"request": "pause"})["status"]
+    return send_for_result({"request": "pause"})
 

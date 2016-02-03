@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import request, Response, Flask, render_template, redirect
 import radio_utils
+import json
 app = Flask(__name__)
 
 
@@ -10,8 +11,10 @@ def check_auth(username, password):
     """
     return username == 'admin' and password == 'secret'
 
+
 def render_template_with_args(template, **kwargs):
     return render_template(template, radio_utils=radio_utils, **kwargs)
+
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
@@ -49,30 +52,39 @@ def library_artist(artist):
     return render_template_with_args("artist.html", artist=artist)
 
 
-@app.route('/library/<artist>/<album>/')
+@app.route('/api/v1/library/<artist>/<album>/')
 @requires_auth
 def library_artist_album(artist, album):
-    return render_template_with_args("album.html", artist=artist, album=album)
+    return json.dumps(radio_utils.get_tracks(artist, album))
 
 
-@app.route('/pause/')
+@app.route('/api/v1/pause/')
 @requires_auth
 def pause():
-    radio_utils.pause()
-    return redirect('/')
+    return json.dumps(radio_utils.pause())
 
-@app.route('/vol/<value>/')
+
+@app.route('/ping')
+@requires_auth
+def ping():
+    return "pong"
+
+
+@app.route('/api/v1/vol/<value>/')
 @requires_auth
 def vol(value):
-    radio_utils.set_vol(value)
-    return redirect("/")
+    return json.dumps(radio_utils.set_vol(value))
 
-@app.route('/play/')
+@app.route('/api/v1/status/')
+def status():
+    return json.dumps(radio_utils.get_status())
+
+@app.route('/api/v1/play/')
 @requires_auth
 def play():
-    radio_utils.play()
-    return redirect('/')
+    return json.dumps(radio_utils.play())
 
 if __name__ == '__main__':
     app.debug = True
+
     app.run(host="mrokita.pl")

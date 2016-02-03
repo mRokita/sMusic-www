@@ -1,20 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>sMusic-www - Minimal Preview</title>
-</head>
-<body>
-    <a href="pause">pause</a><br />
-    <a href="play">play</a><br />
-    {% set status = radio_utils.get_status() %}
-    Tytuł: {{ status["title"] }}<br />
-    Album: {{ status["album"] }}<br />
-    Wykonawca: {{ status["artist"] }}<br />
-    Plik: {{ status["file"] }}
-    <br />
-    {% for val in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] %}
-    <a href="vol/{{val}}">{{val}}</a>
-    {% endfor %}
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}sMusic-www - Minimal Preview{% endblock %}
+{% block main %}
+    <div class="row card-panel blue-grey" data-ng-app="sMusic" data-ng-controller="mainView"
+         xmlns="http://www.w3.org/1999/html">
+        {% raw %}
+        <div class="col l5 m6 s12">
+            <div class="card">
+                <div class="card-image waves-effect waves-block waves-light">
+                  <img class="activator" id="albumart" onError="this.src='http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg';" src='{{ albumArtURL }}'>
+                </div>
+                <div class="card-content">
+                  <span class="card-title activator grey-text text-darken-4"><span id="status_title">{{ trackTitle }}</span><i class="material-icons right">more_vert</i></span>
+                </div>
+                <div class="card-reveal">
+                    <span class="card-title grey-text text-darken-4" id="status_title">{{ trackTitle }}<i class="material-icons right">close</i></span>
+                    <br />
+                    <label for="title">Tytuł</label>
+                    <div id="title">{{ trackTitle }}</div>
+                    <label for="album">Album</label>
+                    <div id="album">{{ trackAlbum }}</div>
+                    <label for="artist">Wykonawca</label>
+                    <div id="artist">{{ trackArtist }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col l7 m6 s12">
+            <div class="card-panel white"  style="height:100%">
+                <a href="javascript:void(0)" onclick="pause()">pause</a><br />
+                <a href="javascript:void(0)" onclick="play()">play</a><br />
+                <form action="#" >
+                    <p class="range-field" >
+                        <label for="test5">Głośność</label>
+                        <input type="range" id="test5" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()"/>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endraw %}
+{% endblock %}
+{% block script %}
+    <script type="text/javascript" src="js/main.js"></script>
+{% endblock %}
