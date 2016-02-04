@@ -6,11 +6,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2b6b5fee-8532-4a84-9d25-44c2a61907cc" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/.name" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/sMusic-www.iml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="" />
     </list>
     <ignored path="sMusic-www.iws" />
@@ -695,7 +690,13 @@
       <option name="project" value="LOCAL" />
       <updated>1454628614437</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Usuwam .idea">
+      <created>1454628784414</created>
+      <option name="number" value="00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1454628784414</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -767,7 +768,8 @@
     <MESSAGE value="Kilka zmian w layoucie i zmiana źródła coverartów z coverartarchive na slothradio" />
     <MESSAGE value="Rozwijam frontend&#10;" />
     <MESSAGE value="Aktualizuję README" />
-    <option name="LAST_COMMIT_MESSAGE" value="Aktualizuję README" />
+    <MESSAGE value="Usuwam .idea" />
+    <option name="LAST_COMMIT_MESSAGE" value="Usuwam .idea" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
