@@ -1,14 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>sMusic-www - Minimal Preview</title>
-</head>
-<body>
-    <a href="..">..</a><br />
-    {% set artists = radio_utils.get_artists() %}
-    {% for name in artists %}
-    <a href="/library/{{artists[name]}}">{{ name }}</a><br />
-    {% endfor %}
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}sMusic-www - Minimal Preview{% endblock %}
+{% block main %}
+    <div class="row card-panel white" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="{% block controller %}{% endblock %}"
+         xmlns="http://www.w3.org/1999/html">
+        <nav>
+        <div class="nav-wrapper black" style="overflow-x:auto;overflow-y:hidden;white-space:nowrap;">
+          <div class="col l12 m12 s12" >
+            {% block breadcrumb %}
+            {% endblock %}
+          </div>
+        </div>
+        </nav>
+        <div class="col l12 m12 s12">
+            <h4>{% block items_title %}{% endblock %}</h4>
+            {% block collection %}
+            <div class="collection" >
+                {% block items %}{% endblock %}
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script type="text/javascript" src="/static/js/main.js"></script>
+{% endblock %}

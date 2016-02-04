@@ -34,6 +34,14 @@ def get_albums(artist=None):
     return send_for_result({"request": "get_albums", "artist": artist})
 
 
+def clear_queue_and_play(artist_id, album_id, track_id):
+    return send_for_result({"request": "set_queue_to_single_track", "artist_id": artist_id, "album_id": album_id, "track_id": track_id, "start_playing": True})
+
+
+def add_to_queue(artist_id, album_id, track_id):
+    return send_for_result({"request": "add_to_queue", "artist_id": artist_id, "album_id": album_id, "track_id": track_id})
+
+
 def get_tracks(artist=None, album=None):
     return send_for_result({"request": "get_tracks", "artist": artist, "album": album})
 
@@ -48,6 +56,15 @@ def get_status():
 
 def set_vol(value):
     return send_for_result({"request": "set_vol", "value": value})
+
+
+def play_prev():
+    return send_for_result({"request": "play_prev"})
+
+
+def play_next():
+    return send_for_result({"request": "play_next"})
+
 
 
 def play():

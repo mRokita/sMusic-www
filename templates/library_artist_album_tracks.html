@@ -1,0 +1,30 @@
+{% extends "library.html" %}
+{% block controller %}libraryArtistAlbumTracks{% endblock %}
+{% block breadcrumb %}
+    <a href="/library/" class="breadcrumb">Biblioteka</a>
+    <a href="/library/" class="breadcrumb">Artyści</a>
+    <a href="/library/{{artist}}" class="breadcrumb">{% raw %}{{artist_name}}{% endraw %}</a>
+    <a href="/library/{{artist}}" class="breadcrumb">Albumy</a>
+    <a href="/library/{{artist}}/{{album}}" class="breadcrumb">{% raw %}{{album_name}}{% endraw %}</a>
+    <a href="/library/{{artist}}/{{album}}" class="breadcrumb">Utwory</a>
+{% endblock %}
+{% block collection %}
+    <ul class="collection">
+    {% raw %}
+        <li data-ng-repeat="track in tracks" class="collection-item">
+            {{ track.title }}
+            <span class="secondary-content">
+                <a href="javascript:void(0)" data-ng-click="addToQueue(track.id)" title="Dodaj do kolejki"><i class="small material-icons">toc</i></a>
+                <a href="javascript:void(0)" data-ng-click="clearQueueAndPlayTrack(track.id)" title="Wyczyść kolejkę i zacznij grać"><i class="small material-icons">play_arrow</i></a>
+            </span>
+        </li>
+    {% endraw %}
+    </ul>
+{% endblock %}
+{% block script %}
+    <script type="text/javascript">
+        artist = "{{artist}}";
+        album = "{{album}}"
+    </script>
+    {{ super() }}
+{% endblock %}

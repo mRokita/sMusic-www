@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}sMusic-www - Minimal Preview{% endblock %}
 {% block main %}
-    <div class="row card-panel grey" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="mainView"
+    <div class="row card-panel grey" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="playerStatus"
          xmlns="http://www.w3.org/1999/html">
         {% raw %}
         <div class="col l5 m6 s12">
@@ -25,13 +25,27 @@
             </div>
         </div>
         <div class="col l7 m6 s12">
+            <div class="card-panel white" ng-if="queue.length" style="padding-top:5px;padding-bottom:5px;">
+                <h5>Kolejka</h5>
+                <ul class="collection" >
+                    <li class="collection-item" ng-repeat="track in queue">{{ track.title }}&nbsp;&nbsp;<span class="grey-text">{{ track.artist }}&nbsp;-&nbsp;{{ track.album }}</span><a class="secondary-content">{{ info.length_readable }}</a></li>
+                </ul>
+            </div>
             <div class="card-panel white">
-                <a href="javascript:void(0)" data-ng-click='playerPause()'>pause</a><br />
-                <a href="javascript:void(0)" data-ng-click="playerPlay()">play</a><br />
+                <div class="center-align">
+                    <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPrev()"><i class="medium material-icons">skip_previous</i></a>
+                    <a class="grey-text" href="javascript:void(0)" data-ng-click='playerPause()'><i class="medium material-icons">pause_circle_outline</i></a>
+                    <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPlay()"><i class="medium material-icons">play_circle_outline</i></a>
+                    <a class="grey-text" href="javascript:void(0)" data-ng-click="playerNext()"><i class="medium material-icons">skip_next</i></a>
+                </div>
                 <form action="#" >
+                    <p class="range-field">
+                        <label for="progress" width="100%">{{ trackTitle }} - {{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;[{{ (position-position%60)/60 }}:{{position%60}}/{{ (duration-duration%60)/60 }}:{{duration%60}}]</label>
+                        <input type="range" id="progress" step="1" min="0" max="{{ duration }}" data-ng-model="position" disabled="disabled"/>
+                    </p>
                     <p class="range-field" >
-                        <label for="test5">Głośność</label>
-                        <input type="range" id="test5" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()"/>
+                        <label for="volume">Głośność</label>
+                        <input type="range" id="volume" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()"/>
                     </p>
                 </form>
             </div>
@@ -40,5 +54,5 @@
     {% endraw %}
 {% endblock %}
 {% block script %}
-    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="/static/js/main.js"></script>
 {% endblock %}

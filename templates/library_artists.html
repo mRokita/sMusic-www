@@ -1,0 +1,11 @@
+{% extends "library.html" %}
+{% block controller %}libraryMainView{% endblock %}
+{% block breadcrumb %}
+    <a href="/library" class="breadcrumb">Biblioteka</a>
+    <a href="/library" class="breadcrumb">Artyści</a>
+{% endblock %}
+{% block items %}
+    {% raw %}
+    <a data-ng-repeat="artist in artists" data-ng-href="{{artist.id}}/" class="collection-item">{{ artist.name }}&nbsp;&nbsp;</a>
+    {% endraw %}
+{% endblock %}
