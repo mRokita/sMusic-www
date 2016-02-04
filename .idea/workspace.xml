@@ -5,9 +5,8 @@
     <bookmark url="file://$PROJECT_DIR$/README.md" line="2" mnemonic="0" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2b6b5fee-8532-4a84-9d25-44c2a61907cc" name="Default" comment="Usuwam .idea">
+    <list default="true" id="2b6b5fee-8532-4a84-9d25-44c2a61907cc" name="Default" comment="">
       <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
     </list>
     <ignored path="sMusic-www.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -703,7 +702,13 @@
       <option name="project" value="LOCAL" />
       <updated>1454628845913</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Usuwam .idea">
+      <created>1454628923417</created>
+      <option name="number" value="00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1454628923417</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="ToolWindowManager">
