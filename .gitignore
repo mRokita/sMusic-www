@@ -18,6 +18,7 @@ downloads/
 eggs/
 .eggs/
 .idea/
+.idea/workspace.xml
 lib/
 lib64/
 parts/
