@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}sMusic-www - Minimal Preview{% endblock %}
 {% block main %}
-    <div class="row card-panel blue-grey" data-ng-app="sMusic" data-ng-controller="mainView"
+    <div class="row card-panel grey" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="mainView"
          xmlns="http://www.w3.org/1999/html">
         {% raw %}
         <div class="col l5 m6 s12">
@@ -10,10 +10,10 @@
                   <img class="activator" id="albumart" onError="this.src='http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg';" src='{{ albumArtURL }}'>
                 </div>
                 <div class="card-content">
-                  <span class="card-title activator grey-text text-darken-4"><span id="status_title">{{ trackTitle }}</span><i class="material-icons right">more_vert</i></span>
+                  <span class="card-title activator grey-text text-darken-4">{{ trackTitle }}</span>
                 </div>
                 <div class="card-reveal">
-                    <span class="card-title grey-text text-darken-4" id="status_title">{{ trackTitle }}<i class="material-icons right">close</i></span>
+                    <span class="card-title grey-text text-darken-4" id="status_title">{{ trackTitle }}</span>
                     <br />
                     <label for="title">Tytuł</label>
                     <div id="title">{{ trackTitle }}</div>
@@ -25,9 +25,9 @@
             </div>
         </div>
         <div class="col l7 m6 s12">
-            <div class="card-panel white"  style="height:100%">
-                <a href="javascript:void(0)" onclick="pause()">pause</a><br />
-                <a href="javascript:void(0)" onclick="play()">play</a><br />
+            <div class="card-panel white">
+                <a href="javascript:void(0)" data-ng-click='playerPause()'>pause</a><br />
+                <a href="javascript:void(0)" data-ng-click="playerPlay()">play</a><br />
                 <form action="#" >
                     <p class="range-field" >
                         <label for="test5">Głośność</label>

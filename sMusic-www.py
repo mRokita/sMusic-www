@@ -2,8 +2,13 @@ from functools import wraps
 from flask import request, Response, Flask, render_template, redirect
 import radio_utils
 import json
+import re
+from urllib import urlopen, urlencode
 app = Flask(__name__)
 
+ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
+PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
+PATTERN_FIX_ALBUM = re.compile("(\\ ?\\(.*?)\\)|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)")
 
 def check_auth(username, password):
     """This function is called to check if a username /
@@ -75,9 +80,19 @@ def ping():
 def vol(value):
     return json.dumps(radio_utils.set_vol(value))
 
+
 @app.route('/api/v1/status/')
+@requires_auth
 def status():
     return json.dumps(radio_utils.get_status())
+
+
+@app.route('/api/v1/albumart/<artist>/<album>/')
+@requires_auth
+def album_art(artist, album):
+    url = ALBUM_ART_URL.format(artist, PATTERN_FIX_ALBUM.sub("", album))
+    return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
+
 
 @app.route('/api/v1/play/')
 @requires_auth
