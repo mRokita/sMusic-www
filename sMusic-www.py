@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from __future__ import print_function
 from functools import wraps
 from flask import request, Response, Flask, render_template, redirect
@@ -11,7 +12,18 @@ __version__ = "0.1.0 Alpha"
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
 PATTERN_FIX_ALBUM = re.compile("( ?\\(.*?\\))|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)|(\\&)|(\\,)|( UK)|( US)")
+CHAR_FIX = {u"ó": u"o",
+            u"ź": u"z",
+            u"ł": u"l",
+            u"ą": u"a",
+            u"ę": u"e",
+            u"ń": u"n"}
 
+
+def fix_chars(string):
+    for char in CHAR_FIX:
+        string = string.replace(char, CHAR_FIX[char])
+    return string
 
 def check_auth(username, password):
     """This function is called to check if a username /
@@ -141,8 +153,9 @@ def current_queue():
 @app.route('/api/v1/albumart/<artist>/<album>/')
 @requires_auth
 def album_art(artist, album):
-    url = ALBUM_ART_URL.format(artist, PATTERN_FIX_ALBUM.sub("", album))
-    print(url, file=sys.stderr)
+
+    print([unicode(fix_chars(artist).encode("utf-8"))], file=sys.stderr)
+    url = ALBUM_ART_URL.format(unicode(fix_chars(artist).encode("utf-8")), PATTERN_FIX_ALBUM.sub("", unicode(fix_chars(album).encode("utf-8"))))
     return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
 
 

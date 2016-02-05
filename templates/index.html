@@ -20,7 +20,7 @@ Panel główny
         <div class="col l5 m6 s12">
             <div class="card">
                 <div class="card-image waves-effect waves-block waves-light">
-                  <img class="activator" id="albumart" onError="this.src='http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg';" src='{{ albumArtURL }}'>
+                  <img class="activator" id="albumart" onError="this.src='http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg';" data-ng-src='{{ albumArtURL }}'>
                 </div>
                 <div class="card-content">
                   <span class="card-title activator grey-text text-darken-4">{{ trackTitle }}</span>
@@ -55,7 +55,7 @@ Panel główny
                 </div>
                 <form action="#" >
                     <p class="range-field">
-                        <label for="progress" width="100%">{{ trackTitle }} - <span data-ng-if="{{ isPlaying }}">{{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;</span>[{{ (position-position%60)/60 }}:{{position%60}}/{{ (duration-duration%60)/60 }}:{{duration%60}}]</label>
+                        <label for="progress" width="100%">{{ trackTitle }} - <span data-ng-if="isPlaying">{{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;</span>[{{ (position-position%60)/60 }}:{{position%60}}/{{ (duration-duration%60)/60 }}:{{duration%60}}]</label>
                         <input type="range" id="progress" step="1" min="0" max="{{ duration }}" data-ng-model="position" disabled="disabled"/>
                     </p>
                     <p class="range-field" >

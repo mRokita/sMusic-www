@@ -46,6 +46,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
         if (typeof $scope.id !== "undefined"){
             $interval.cancel($scope.id);
         }
+        $scope.isPlaying = false;
         $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
         var loadFromStatus = function (response) {
             $scope.volume = response['status']['vol_left'];
@@ -82,7 +83,6 @@ app.controller('playerStatus', function($scope, $http, $interval){
             loadFromStatus(status);
         $http.get("/api/v1/current_queue/").success(function (response){
             $scope.queue = response['queue'];
-            console.log($scope.queue);
         });
     };
 
