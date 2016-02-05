@@ -48,12 +48,13 @@ app.controller('playerStatus', function($scope, $http, $interval){
         }
         $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
         var loadFromStatus = function (response) {
-            $scope.volume = response['status']["vol_left"];
-            $scope.isPlaying = response["status"].hasOwnProperty("file");
+            $scope.volume = response['status']['vol_left'];
+            $scope.isPlaying = response['status'].hasOwnProperty('file');
             if($scope.isPlaying) {
-                $scope.trackTitle = response["status"].hasOwnProperty("title") ? response['status']['title'] : response["status"]["file"];
-                $scope.trackArtist = response["status"].hasOwnProperty("artist") ? response['status']['artist']: "<Unknown>";
-                $scope.trackAlbum = response["status"].hasOwnProperty("album") ? response['status']['artist']: "<Unknown>";
+                $scope.trackTitle = response['status'].hasOwnProperty("title") ? response['status']['title'] : response["status"]["file"];
+                $scope.trackArtist = response['status'].hasOwnProperty("artist") ?  response['status']['artist'] :
+                    (response["status"].hasOwnProperty('albumartist') ? response['status']['albumartist']: "Nieznany");
+                $scope.trackAlbum = response['status'].hasOwnProperty('album') ? response['status']['album']: "Nieznany";
                 $scope.position = response['status']['position'];
                 $scope.duration = response['status']['duration'];
                 $scope.duration_readable = response['status']['duration_readable'];
