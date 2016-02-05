@@ -1,8 +1,29 @@
 {% extends "base.html" %}
 {% block title %}sMusic-www - Minimal Preview{% endblock %}
+{% block menu %}
+    <div class="hide-on-med-and-down">
+        {% include "search_box.html" %}
+    </div>
+    {{ super() }}
+    <div class="hide-on-large-only">
+        {% include "search_box.html" %}
+    </div>
+{% endblock %}
+{% block menu_links %}
+    <a href="/" class="collection-item blue-text">Panel główny</a>
+    <a href="/library/" class="collection-item active blue">Biblioteka muzyczna</a>
+    <a href="#" class="collection-item blue-text">Kalendarz</a>
+{% endblock %}
+{% block menu_links_mobile %}
+    <li><a href="/" class="collection-item">Panel główny</a></li>
+    <li><a href="/library/" class="collection-item">Biblioteka muzyczna</a></li>
+    <li><a href="#" class="collection-item">Kalendarz</a></li>
+{% endblock %}
+{% block dropdown_title %}
+Biblioteka muzyczna
+{% endblock %}
 {% block main %}
-    <div class="row card-panel white" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="{% block controller %}{% endblock %}"
-         xmlns="http://www.w3.org/1999/html">
+    <div class="row card-panel white" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="{% block controller %}{% endblock %}">
         <nav>
         <div class="nav-wrapper black" style="overflow-x:auto;overflow-y:hidden;white-space:nowrap;">
           <div class="col l12 m12 s12" >
@@ -12,7 +33,6 @@
         </div>
         </nav>
         <div class="col l12 m12 s12">
-            <h4>{% block items_title %}{% endblock %}</h4>
             {% block collection %}
             <div class="collection" >
                 {% block items %}{% endblock %}

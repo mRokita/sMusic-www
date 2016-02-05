@@ -1,14 +1,16 @@
+from __future__ import print_function
 from functools import wraps
 from flask import request, Response, Flask, render_template, redirect
 import radio_utils
 import json
+import sys
 import re
 from urllib import urlopen, urlencode
 app = Flask(__name__)
-
+__version__ = "0.1.0 Alpha"
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
-PATTERN_FIX_ALBUM = re.compile("(\\ ?\\(.*?)\\)|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)|(\\&)|(\\,)")
+PATTERN_FIX_ALBUM = re.compile("( ?\\(.*?\\))|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)|(\\&)|(\\,)|( UK)|( US)")
 
 
 def check_auth(username, password):
@@ -19,7 +21,7 @@ def check_auth(username, password):
 
 
 def render_template_with_args(template, **kwargs):
-    return render_template(template, radio_utils=radio_utils, **kwargs)
+    return render_template(template, radio_utils=radio_utils, version=__version__, **kwargs)
 
 
 def authenticate():
@@ -118,10 +120,17 @@ def clear_q_and_play(artist_id, album_id, track_id):
     return json.dumps(radio_utils.clear_queue_and_play(artist_id, album_id, track_id))
 
 
+@app.route('/api/v1/clear_queue/')
+@requires_auth
+def clear_queue():
+    return json.dumps(radio_utils.clear_queue())
+
+
 @app.route('/api/v1/add_to_q/<artist_id>/<album_id>/<track_id>/')
 @requires_auth
 def add_to_q(artist_id, album_id, track_id):
     return json.dumps(radio_utils.add_to_queue(artist_id, album_id, track_id))
+
 
 @app.route('/api/v1/current_queue/')
 @requires_auth
@@ -133,6 +142,7 @@ def current_queue():
 @requires_auth
 def album_art(artist, album):
     url = ALBUM_ART_URL.format(artist, PATTERN_FIX_ALBUM.sub("", album))
+    print(url, file=sys.stderr)
     return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
 
 

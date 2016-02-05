@@ -34,6 +34,10 @@ def get_albums(artist=None):
     return send_for_result({"request": "get_albums", "artist": artist})
 
 
+def clear_queue():
+    return send_for_result({"request": "clear_queue"})
+
+
 def clear_queue_and_play(artist_id, album_id, track_id):
     return send_for_result({"request": "set_queue_to_single_track", "artist_id": artist_id, "album_id": album_id, "track_id": track_id, "start_playing": True})
 

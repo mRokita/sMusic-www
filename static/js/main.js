@@ -75,6 +75,12 @@ app.controller('playerStatus', function($scope, $http, $interval){
             console.log($scope.queue);
         });
     };
+
+    $scope.clearQueue = function () {
+        $http.get("/api/v1/clear_queue/").success(function(){
+            $scope.queue = [];
+        });
+    };
     $scope.updateVolume = function(){
         $http.get("/api/v1/vol/"+$scope.volume+"/");
     };

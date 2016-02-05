@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 {% block title %}sMusic-www - Minimal Preview{% endblock %}
+{% block menu_links %}
+    <a href="/" class="collection-item active blue">Panel główny</a>
+    <a href="/library/" class="collection-item blue-text">Biblioteka muzyczna</a>
+    <a href="#" class="collection-item blue-text">Kalendarz</a>
+{% endblock %}
+{% block menu_links_mobile %}
+    <li><a href="/" class="collection-item">Panel główny</a></li>
+    <li><a href="/library/" class="collection-item">Biblioteka muzyczna</a></li>
+    <li><a href="#" class="collection-item">Kalendarz</a></li>
+{% endblock %}
+{% block dropdown_title %}
+Panel główny
+{% endblock %}
 {% block main %}
     <div class="row card-panel grey" style="padding:0px;" data-ng-app="sMusic" data-ng-controller="playerStatus"
          xmlns="http://www.w3.org/1999/html">
@@ -25,11 +38,12 @@
             </div>
         </div>
         <div class="col l7 m6 s12">
-            <div class="card-panel white" ng-if="queue.length" style="padding-top:5px;padding-bottom:5px;">
-                <h5>Kolejka</h5>
+            <div class="card-panel white" data-ng-if="queue.length" style="padding-top:5px;">
+                <h5 style="endl">Kolejka</h5>
                 <ul class="collection" >
-                    <li class="collection-item" ng-repeat="track in queue">{{ track.title }}&nbsp;&nbsp;<span class="grey-text">{{ track.artist }}&nbsp;-&nbsp;{{ track.album }}</span><a class="secondary-content">{{ info.length_readable }}</a></li>
+                    <li class="collection-item" data-ng-repeat="track in queue">{{ track.title }}&nbsp;&nbsp;<span class="grey-text">{{ track.artist }}&nbsp;-&nbsp;{{ track.album }}</span><a class="secondary-content">{{ track.length_readable }}</a></li>
                 </ul>
+                <button class="waves-effect waves-light btn" data-ng-click="clearQueue()">WYCZYŚĆ</button>
             </div>
             <div class="card-panel white">
                 <div class="center-align">
