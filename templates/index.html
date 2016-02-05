@@ -38,14 +38,15 @@ Panel główny
             </div>
         </div>
         <div class="col l7 m6 s12">
-            <div class="card-panel white" data-ng-if="queue.length" style="padding-top:5px;">
-                <h5 style="endl">Kolejka</h5>
+            <div class="card-panel white" data-ng-if="queue.length">
+                <h5 style="margin-top:0">Kolejka</h5>
                 <ul class="collection" >
                     <li class="collection-item" data-ng-repeat="track in queue">{{ track.title }}&nbsp;&nbsp;<span class="grey-text">{{ track.artist }}&nbsp;-&nbsp;{{ track.album }}</span><a class="secondary-content">{{ track.length_readable }}</a></li>
                 </ul>
                 <button class="waves-effect waves-light btn" data-ng-click="clearQueue()">WYCZYŚĆ</button>
             </div>
             <div class="card-panel white">
+                <h5 style="margin-top:0">Odtwarzacz</h5>
                 <div class="center-align">
                     <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPrev()"><i class="medium material-icons">skip_previous</i></a>
                     <a class="grey-text" href="javascript:void(0)" data-ng-click='playerPause()'><i class="medium material-icons">pause_circle_outline</i></a>
