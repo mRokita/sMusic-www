@@ -55,7 +55,7 @@ Panel główny
                 </div>
                 <form action="#" >
                     <p class="range-field">
-                        <label for="progress" width="100%">{{ trackTitle }} - {{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;[{{ (position-position%60)/60 }}:{{position%60}}/{{ (duration-duration%60)/60 }}:{{duration%60}}]</label>
+                        <label for="progress" width="100%">{{ trackTitle }} - <span data-ng-if="{{ isPlaying }}">{{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;</span>[{{ (position-position%60)/60 }}:{{position%60}}/{{ (duration-duration%60)/60 }}:{{duration%60}}]</label>
                         <input type="range" id="progress" step="1" min="0" max="{{ duration }}" data-ng-model="position" disabled="disabled"/>
                     </p>
                     <p class="range-field" >

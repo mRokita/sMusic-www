@@ -49,12 +49,23 @@ app.controller('playerStatus', function($scope, $http, $interval){
         $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
         var loadFromStatus = function (response) {
             $scope.volume = response['status']["vol_left"];
-            $scope.trackTitle = response['status']['title'];
-            $scope.trackArtist = response['status']['artist'];
-            $scope.trackAlbum = response['status']['album'];
-            $scope.position = response['status']['position'];
-            $scope.duration = response['status']['duration'];
-            $scope.duration_readable = response['status']['duration_readable'];
+            $scope.isPlaying = response["status"].hasOwnProperty("title");
+            if($scope.isPlaying) {
+                $scope.trackTitle = response['status']['title'];
+                $scope.trackArtist = response['status']['artist'];
+                $scope.trackAlbum = response['status']['album'];
+                $scope.position = response['status']['position'];
+                $scope.duration = response['status']['duration'];
+                $scope.duration_readable = response['status']['duration_readable'];
+                $scope.albumArtURL = "/api/v1/albumart/" + encodeURI($scope.trackArtist)+"/"+encodeURI($scope.trackAlbum)+"/";
+            } else {
+                $scope.trackTitle = "Error: No track is loaded";
+                $scope.trackArtist = "Error: No track is loaded";
+                $scope.trackAlbum = "Error: No track is loaded";
+                $scope.position = 0;
+                $scope.duration = 0;
+                $scope.duration_readable = "00:00";
+            }
             if(response['status']['status'] === 'playing')
                 $scope.id = $interval(function(){
                     $scope.position++;
@@ -63,8 +74,6 @@ app.controller('playerStatus', function($scope, $http, $interval){
                         $interval.cancel($scope.id);
                     }
                 }, 1000);
-            $scope.albumArtURL = "/api/v1/albumart/" + encodeURI($scope.trackArtist)+"/"+encodeURI($scope.trackAlbum)+"/";
-            console.log($scope.albumArtURL);
         };
         if (typeof status === "undefined")
             $http.get("/api/v1/status/").success(loadFromStatus);
