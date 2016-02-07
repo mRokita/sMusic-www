@@ -1,3 +1,5 @@
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
 """
 Bardzo minimalny testowy serwer TCP
 """
@@ -12,6 +14,8 @@ from inspect import getargspec
 from threading import Thread
 from functools import partial
 
+
+__version__ = "0.1.0 Alpha"
 msgid = 0
 binds = {}
 queries = {}
@@ -43,21 +47,27 @@ def un_escape(msg):
 
 
 @bind
-def ok(conn, addr, type, key):
+def ok(conn, addr, type, version, key=None):
     global radio
+    if version != __version__:
+        conn.send(escape(json.dumps({u"request": u"error",
+                                     u"type": u"incompatibleVersions",
+                                     u"cat": u"=^..^=",
+                                     u"comment": u"Niekompatybilne wersje komponentow systemu."})))
+        return False
     if type == "radio" and config.radio_key == key:
         radio = conn
-        print "%s:%s is now registered as RADIO" % addr
+        print "%s:%s został zarejestrowany jako RADIO" % addr
         return True
     if type == "www" and addr[0] == "127.0.0.1":
-        print "%s:%s is now registered as WWW" % addr
+        print "%s:%s został zarejestrowany jako WWW" % addr
         return True
     return False
 
 
 def handle_client(conn, addr):
     global msgid
-    print "%s:%s has connected" % addr
+    print "%s:%s połączył się" % addr
     is_registered = False
     conn.write(escape(json.dumps({"request": "type"})))
     msg = conn.read()
@@ -102,12 +112,13 @@ def handle_client(conn, addr):
 
         msg = conn.read()
     conn.close()
-    print "%s:%s has disconnected" % addr
+    print "%s:%s rozłączył się" % addr
 
 
 def main():
     bind_socket = socket.socket()
     bind_socket.bind((config.listen_host, config.listen_port))
+    print "Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port)
     bind_socket.listen(5)
     conns = []
     try:
@@ -126,4 +137,8 @@ def main():
 
 
 if __name__ == "__main__":
+    print "+---------------------------------------------+\n|"+\
+          ("sMusic-www/core_server v{}".format(__version__).center(45, " "))+"|\n|"+\
+          ("https://github.com/mRokita/sMusic-www").center(45, " ")+\
+          "|\n+---------------------------------------------+\n"
     main()

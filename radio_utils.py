@@ -5,6 +5,9 @@ import json
 from base64 import b64encode, b64decode
 
 
+__version__ = "0.1.0 Alpha"
+
+
 def escape(msg):
     return b64encode(msg)+"\n"
 
@@ -21,7 +24,7 @@ def send_for_result(dct):
     conn.settimeout(timeout)
     conn.connect(("127.0.0.1", config.listen_port))
     conn.read()
-    conn.send(escape(json.dumps({"request": "ok", "type": "www", "key": "a"})))
+    conn.send(escape(json.dumps({"request": "ok", "type": "www", "version": __version__})))
     conn.send(escape(json.dumps(dct)))
     buff = ""
     while len(buff) == 0 or not buff[-1] == "\n":
