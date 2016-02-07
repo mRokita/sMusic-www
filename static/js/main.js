@@ -41,6 +41,31 @@ app.controller('libraryArtistAlbumTracks', function($scope, $http){
     $scope.loadData();
 });
 
+app.controller('librarySearch', function($scope, $http){
+    $scope.query = query;
+    console.log($scope.query);
+    $scope.queryChange = function(){
+        $scope.search();
+    };
+    $scope.search = function(){
+        $http.get("/api/v1/search_track/"+encodeURI($scope.query)).success(function(response){
+            $scope.tracks = response["tracks"];
+            console.log(response);
+        });
+    };
+
+    $scope.tracks = {};
+    $scope.clearQueueAndPlayTrack = function(artist_id, album_id, track_id){
+        console.log(artist_id+album_id+track_id);
+        $http.get("/api/v1/clear_q_and_play/"+artist_id+"/"+album_id+"/"+track_id+"/");
+    };
+
+    $scope.addToQueue = function(artist_id, album_id, track_id){
+        $http.get("/api/v1/add_to_q/"+artist_id+"/"+album_id+"/"+track_id+"/");
+    };
+    $scope.search();
+});
+
 app.controller('playerStatus', function($scope, $http, $interval){
     $scope.loadData = function(status) {
         if (typeof $scope.id !== "undefined"){

@@ -1,0 +1,27 @@
+{% extends "library.html" %}
+{% block controller %}librarySearch{% endblock %}
+{% block breadcrumb %}
+    <a href="/library/" class="breadcrumb">Biblioteka</a>
+    <a href="/search/" class="breadcrumb">Szukaj</a>
+    <a href="/search/?q={{ query }}" class="breadcrumb">{{ query }}</a>
+{% endblock %}
+{{ query }}
+{% block collection %}
+    <ul class="collection">
+        {% raw %}
+<li data-ng-repeat="track in tracks" class="collection-item">
+    {{track.title}}<span class="grey-text">&nbsp;&nbsp;-&nbsp;&nbsp;{{ track.album_name }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ track.artist_name }}</span>
+    <span class="secondary-content">
+        <a href="javascript:void(0)" data-ng-click="addToQueue(track.artist_id, track.album_id, track.id)" title="Dodaj do kolejki"><i class="small material-icons">toc</i></a>
+        <a href="javascript:void(0)" data-ng-click="clearQueueAndPlayTrack(track.artist_id, track.album_id, track.id)" title="Wyczyść kolejkę i zacznij grać"><i class="small material-icons">play_arrow</i></a>
+    </span>
+</li>
+{% endraw %}
+    </ul>
+{% endblock %}
+{% block script %}
+    <script type="text/javascript">
+        query = "{{ query }}";
+    </script>
+    {{ super() }}
+{% endblock %}

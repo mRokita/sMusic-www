@@ -1,7 +1,7 @@
 <div class="input-field card-panel white" style="margin-top:7px;">
-    <form action="/library/search/">
+    <form action="/search/" method="GET">
         <div class="input-field" style="margin-top:0;margin-bottom:0;padding-top:0;">
-            <input id="search" type="text" style="margin-top:0;margin-bottom:0;">
+            <input id="search" type="text" name="q" {% if query is defined %}{% raw %}data-ng-model="query" data-ng-change="queryChange()" {% endraw %}{% endif %}style="margin-top:0;margin-bottom:0;">
             <label for="search">Szukaj w bibliotece</label>
         </div>
     </form>

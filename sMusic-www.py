@@ -16,6 +16,8 @@ CHAR_FIX = {u"ó": u"o",
             u"ź": u"z",
             u"ł": u"l",
             u"ą": u"a",
+            u"ś": u"s",
+            u"ć": u"c",
             u"ę": u"e",
             u"ń": u"n"}
 
@@ -66,6 +68,13 @@ def ui_library():
     return render_template_with_args("library_artists.html")
 
 
+@app.route('/search/')
+@requires_auth
+def ui_library_search():
+    query = request.args["q"]
+    return render_template_with_args("library_search.html", query=query)
+
+
 @app.route('/library/<artist>/')
 @requires_auth
 def ui_library_artist(artist):
@@ -80,81 +89,85 @@ def ui_library_artist_album(artist, album):
 
 @app.route('/api/v1/library/')
 @requires_auth
-def library():
+def api_v1_library():
     return json.dumps(radio_utils.get_artists())
 
 
 @app.route('/api/v1/library/<artist>/')
 @requires_auth
-def library_artist(artist):
+def api_v1_library_artist(artist):
     return json.dumps(radio_utils.get_albums(artist))
 
 
 @app.route('/api/v1/library/<artist>/<album>/')
 @requires_auth
-def library_artist_album(artist, album):
+def api_v1_library_artist_album(artist, album):
     return json.dumps(radio_utils.get_tracks(artist, album))
 
 
 @app.route('/api/v1/play_next/')
 @requires_auth
-def play_next():
+def api_v1_play_next():
     return json.dumps(radio_utils.play_next())
 
 
 @app.route('/api/v1/play_prev/')
 @requires_auth
-def play_prev():
+def api_v1_play_prev():
     return json.dumps(radio_utils.play_prev())
 
 
 @app.route('/api/v1/pause/')
 @requires_auth
-def pause():
+def api_v1_pause():
     return json.dumps(radio_utils.pause())
 
 
 @app.route('/api/v1/vol/<value>/')
 @requires_auth
-def vol(value):
+def api_v1_vol(value):
     return json.dumps(radio_utils.set_vol(value))
 
 
 @app.route('/api/v1/status/')
 @requires_auth
-def status():
+def api_v1_status():
     return json.dumps(radio_utils.get_status())
 
 
 @app.route('/api/v1/clear_q_and_play/<artist_id>/<album_id>/<track_id>/')
 @requires_auth
-def clear_q_and_play(artist_id, album_id, track_id):
+def api_v1_clear_q_and_play(artist_id, album_id, track_id):
     return json.dumps(radio_utils.clear_queue_and_play(artist_id, album_id, track_id))
 
 
 @app.route('/api/v1/clear_queue/')
 @requires_auth
-def clear_queue():
+def api_v1_clear_queue():
     return json.dumps(radio_utils.clear_queue())
 
 
 @app.route('/api/v1/add_to_q/<artist_id>/<album_id>/<track_id>/')
 @requires_auth
-def add_to_q(artist_id, album_id, track_id):
+def api_v1_add_to_q(artist_id, album_id, track_id):
     return json.dumps(radio_utils.add_to_queue(artist_id, album_id, track_id))
 
 
 @app.route('/api/v1/current_queue/')
 @requires_auth
-def current_queue():
+def api_v1_current_queue():
     return json.dumps(radio_utils.get_current_queue())
+
+
+@app.route('/api/v1/search_track/<query>')
+@requires_auth
+def api_v1_search_track(query):
+    return json.dumps(radio_utils.search_for_track(query))
 
 
 @app.route('/api/v1/albumart/<artist>/<album>/')
 @requires_auth
-def album_art(artist, album):
-
-    print([unicode(fix_chars(artist).encode("utf-8"))], file=sys.stderr)
+def api_v1_album_art(artist, album):
     url = ALBUM_ART_URL.format(unicode(fix_chars(artist).encode("utf-8")), PATTERN_FIX_ALBUM.sub("", unicode(fix_chars(album).encode("utf-8"))))
     return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
 

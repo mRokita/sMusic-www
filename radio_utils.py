@@ -38,6 +38,10 @@ def get_albums(artist=None):
     return send_for_result({"request": "get_albums", "artist": artist})
 
 
+def search_for_track(query):
+    return send_for_result({"request": "search_for_track", "query": query})
+
+
 def clear_queue():
     return send_for_result({"request": "clear_queue"})
 

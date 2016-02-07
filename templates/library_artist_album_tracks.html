@@ -10,7 +10,7 @@
 {% endblock %}
 {% block collection %}
     <ul class="collection">
-    {% raw %}
+        {% raw %}
         <li data-ng-repeat="track in tracks" class="collection-item">
             {{ track.title }}
             <span class="secondary-content">
@@ -18,7 +18,7 @@
                 <a href="javascript:void(0)" data-ng-click="clearQueueAndPlayTrack(track.id)" title="Wyczyść kolejkę i zacznij grać"><i class="small material-icons">play_arrow</i></a>
             </span>
         </li>
-    {% endraw %}
+{% endraw %}
     </ul>
 {% endblock %}
 {% block script %}
