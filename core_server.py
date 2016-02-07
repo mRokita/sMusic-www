@@ -76,7 +76,6 @@ def handle_client(conn, addr):
         buff += msg
         print [buff]
         parsed_msg = PATTERN_MSG.findall(buff)
-        print "msg: "+str(parsed_msg)
         if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
             buff = parsed_msg[0][1]
             esc_string = parsed_msg[0][0]
