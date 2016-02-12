@@ -15,7 +15,7 @@ from threading import Thread
 from functools import partial
 
 
-__version__ = "0.1.0 Alpha"
+__version__ = "0.1.1 Alpha"
 msgid = 0
 binds = {}
 queries = {}

@@ -5,6 +5,7 @@ from flask import request, Response, Flask, render_template, redirect
 import radio_utils
 import json
 import sys
+import config
 import re
 from urllib import urlopen, urlencode
 app = Flask(__name__)
@@ -31,7 +32,7 @@ def check_auth(username, password):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == 'admin' and password == 'Maisia'
+    return username == config.admin_login and password == config.admin_password
 
 
 def render_template_with_args(template, **kwargs):
