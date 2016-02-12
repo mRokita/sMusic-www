@@ -14,6 +14,15 @@
 Panel główny
 {% endblock %}
 {% block controller %}playerStatus{% endblock %}
+{% block menu %}
+    <div class="hide-on-med-and-down">
+        {% include "search_box.html" %}
+    </div>
+    {{ super() }}
+    <div class="hide-on-large-only">
+        {% include "search_box.html" %}
+    </div>
+{% endblock %}
 {% block main %}
     <div class="row card-panel grey" style="padding:0px;"
          xmlns="http://www.w3.org/1999/html">

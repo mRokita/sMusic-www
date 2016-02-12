@@ -5,7 +5,7 @@ import json
 from base64 import b64encode, b64decode
 
 
-__version__ = "0.1.0 Alpha"
+__version__ = "0.1.1 Alpha"
 
 
 def escape(msg):

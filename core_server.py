@@ -49,6 +49,7 @@ def un_escape(msg):
 @bind
 def ok(conn, addr, type, version, key=None):
     global radio
+    print "OK"
     if version != __version__:
         conn.send(escape(json.dumps({u"request": u"error",
                                      u"type": u"incompatibleVersions",
@@ -74,7 +75,6 @@ def handle_client(conn, addr):
     buff = ""
     while msg:
         buff += msg
-        print [buff]
         parsed_msg = PATTERN_MSG.findall(buff)
         if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
             buff = parsed_msg[0][1]
