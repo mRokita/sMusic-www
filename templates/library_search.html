@@ -19,10 +19,10 @@
             <div class="collapsible-body">
                 <ul class="collection" style="border-radius: 0;">
                     <li class="collection-item grey lighten-2">
-                        <b>Album:</b> {{ track.album_name }}
+                        <b>Album:</b> <a data-ng-href="/library/{{ track.artist_id }}/{{ track.album_id }}/">{{ track.album_name }}</a>
                     </li>
                     <li class="collection-item grey lighten-2">
-                        <b>Wykonawca:</b> {{ track.artist_name }}
+                        <b>Wykonawca:</b> <a data-ng-href="/library/{{ track.artist_id }}/">{{ track.artist_name }}</a>
                     </li>
                     <li class="collection-item blue-grey hide-on-med-and-up">
                         <a href="javascript:void(0)" class="white-text" data-ng-click="addToQueue(track.artist_id, track.album_id, track.id)">Dodaj do kolejki</a>
