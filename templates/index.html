@@ -57,12 +57,17 @@ Panel główny
             </div>
             <div class="card-panel white">
                 <h5 style="margin-top:0">Odtwarzacz</h5>
-                <div class="center-align">
-                    <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPrev()"><i class="medium material-icons">skip_previous</i></a>
-                    <a class="grey-text" href="javascript:void(0)" data-ng-click='playerPause()'><i class="medium material-icons">pause_circle_outline</i></a>
-                    <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPlay()"><i class="medium material-icons">play_circle_outline</i></a>
-                    <a class="grey-text" href="javascript:void(0)" data-ng-click="playerNext()"><i class="medium material-icons">skip_next</i></a>
-                </div>
+                <div class="center-align" style="position: relative">
+                    <div style="z-index: 10">
+                        <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPrev()"><i class="medium material-icons">skip_previous</i></a>
+                        <a class="grey-text" href="javascript:void(0)" data-ng-click='playerPause()'><i class="medium material-icons">pause_circle_outline</i></a>
+                        <a class="grey-text" href="javascript:void(0)" data-ng-click="playerPlay()"><i class="medium material-icons">play_circle_outline</i></a>
+                        <a class="grey-text" href="javascript:void(0)" data-ng-click="playerNext()"><i class="medium material-icons">skip_next</i></a>
+                    </div>
+                    <div id="controls_cover" class="fill card-panel grey valign-wrapper" style="font-size: 30px; top:-10px" ng-show="isLocked">
+                            <span class="valign center-block"> Trwa lekcja...</span>
+                        </div>
+                    </div>
                 <form action="#" >
                     <p class="range-field">
                         <label for="progress" width="100%">{{ trackTitle }} - <span data-ng-if="isPlaying">{{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;</span>[{{ (position-position%60)/60 }}:{{position%60}}/{{ (duration-duration%60)/60 }}:{{duration%60}}]</label>

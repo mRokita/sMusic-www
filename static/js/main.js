@@ -67,15 +67,14 @@ app.controller('librarySearch', function($scope, $http){
 });
 
 app.controller('playerStatus', function($scope, $http, $interval){
+    $scope.isPlaying = false;
+    $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
+
     $scope.loadData = function(status) {
-        if (typeof $scope.id !== "undefined"){
-            $interval.cancel($scope.id);
-        }
-        $scope.isPlaying = false;
-        $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
         var loadFromStatus = function (response) {
             $scope.volume = response['status']['vol_left'];
             $scope.isPlaying = response['status'].hasOwnProperty('file');
+            $scope.isLocked = response['status']['locked'];
             if($scope.isPlaying) {
                 $scope.trackTitle = response['status'].hasOwnProperty("title") ? response['status']['title'] : response["status"]["file"];
                 $scope.trackArtist = response['status'].hasOwnProperty("artist") ?  response['status']['artist'] :
@@ -84,23 +83,20 @@ app.controller('playerStatus', function($scope, $http, $interval){
                 $scope.position = response['status']['position'];
                 $scope.duration = response['status']['duration'];
                 $scope.duration_readable = response['status']['duration_readable'];
-                $scope.albumArtURL = "/api/v1/albumart/" + encodeURI($scope.trackArtist)+"/"+encodeURI($scope.trackAlbum)+"/";
+                newAlbumArtURL = "/api/v1/albumart/" + encodeURI($scope.trackArtist)+"/"+encodeURI($scope.trackAlbum)+"/";
+                if ($scope.albumArtURL != newAlbumArtURL)
+                    $scope.albumArtURL = newAlbumArtURL;
             } else {
                 $scope.trackTitle = "Error: No track is loaded";
                 $scope.trackArtist = "Error: No track is loaded";
                 $scope.trackAlbum = "Error: No track is loaded";
+                newAlbumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
+                if ($scope.albumArtURL != newAlbumArtURL)
+                    $scope.albumArtURL = newAlbumArtURL;
                 $scope.position = 0;
                 $scope.duration = 0;
                 $scope.duration_readable = "00:00";
             }
-            if(response['status']['status'] === 'playing')
-                $scope.id = $interval(function(){
-                    $scope.position++;
-                    if($scope.position >= $scope.duration){
-                        $scope.loadData();
-                        $interval.cancel($scope.id);
-                    }
-                }, 1000);
         };
         if (typeof status === "undefined")
             $http.get("/api/v1/status/").success(loadFromStatus);
@@ -116,6 +112,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
             $scope.queue = [];
         });
     };
+
     $scope.updateVolume = function(){
         $http.get("/api/v1/vol/"+$scope.volume+"/");
     };
@@ -145,6 +142,6 @@ app.controller('playerStatus', function($scope, $http, $interval){
 
     };
 
-    $scope.loadData();
+    $interval(function() {$scope.loadData();}, 1000);
 
 });
