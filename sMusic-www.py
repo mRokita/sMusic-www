@@ -28,11 +28,13 @@ def fix_chars(string):
         string = string.replace(char, CHAR_FIX[char])
     return string
 
-def check_auth(username, password):
-    """This function is called to check if a username /
-    password combination is valid.
+
+def check_auth():
     """
-    return username == config.admin_login and password == config.admin_password
+    Ta funkcja sprawdza, czy dane logowania są prawidłowe
+    """
+    auth = request.authorization
+    return auth and auth.username == config.admin_login and auth.password == config.admin_password
 
 
 def render_template_with_args(template, **kwargs):
@@ -50,17 +52,20 @@ def authenticate():
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
+        if not check_auth():
             return authenticate()
         return f(*args, **kwargs)
     return decorated
 
 
 @app.route('/')
-@requires_auth
-def ui_index():
-    return render_template_with_args("index.html")
+def ui_player():
+    return render_template_with_args("player.html", is_logged_in = check_auth())
+
+
+@app.route('/login/')
+def ui_login():
+    return authenticate()
 
 
 @app.route('/library/')
@@ -131,7 +136,6 @@ def api_v1_vol(value):
 
 
 @app.route('/api/v1/status/')
-@requires_auth
 def api_v1_status():
     return json.dumps(radio_utils.get_status())
 
@@ -155,7 +159,6 @@ def api_v1_add_to_q(artist_id, album_id, track_id):
 
 
 @app.route('/api/v1/current_queue/')
-@requires_auth
 def api_v1_current_queue():
     return json.dumps(radio_utils.get_current_queue())
 
@@ -167,7 +170,6 @@ def api_v1_search_track(query):
 
 
 @app.route('/api/v1/albumart/<artist>/<album>/')
-@requires_auth
 def api_v1_album_art(artist, album):
     url = ALBUM_ART_URL.format(unicode(fix_chars(artist).encode("utf-8")), PATTERN_FIX_ALBUM.sub("", unicode(fix_chars(album).encode("utf-8"))))
     return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
