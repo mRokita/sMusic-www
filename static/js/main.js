@@ -67,15 +67,20 @@ app.controller('librarySearch', function($scope, $http){
 });
 
 app.controller('playerStatus', function($scope, $http, $interval){
-    $scope.isPlaying = false;
+    $scope.isFileLoaded = false;
     $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
-
     $scope.loadData = function(status) {
+        console.log("Loading...");
         var loadFromStatus = function (response) {
+            if (typeof response === "undefined") return;
             $scope.volume = response['status']['vol_left'];
-            $scope.isPlaying = response['status'].hasOwnProperty('file');
+            $scope.isFileLoaded = response['status'].hasOwnProperty('file');
             $scope.isLocked = response['status']['locked'];
-            if($scope.isPlaying) {
+            $scope.isPlaying= response['status']['status'] !== "paused";
+            $scope.hideButtons = $scope.isLocked && !$scope.isPlaying;
+            console.log($scope.hideButtons);
+            var newAlbumArtURL;
+            if($scope.isFileLoaded) {
                 $scope.trackTitle = response['status'].hasOwnProperty("title") ? response['status']['title'] : response["status"]["file"];
                 $scope.trackArtist = response['status'].hasOwnProperty("artist") ?  response['status']['artist'] :
                     (response["status"].hasOwnProperty('albumartist') ? response['status']['albumartist']: "Nieznany");
@@ -118,27 +123,19 @@ app.controller('playerStatus', function($scope, $http, $interval){
     };
 
     $scope.playerPause = function(){
-        $http.get("/api/v1/pause/").success(function(res){
-            $scope.loadData(res);
-        });
+        $http.get("/api/v1/pause/");
     };
 
     $scope.playerPlay = function(){
-        $http.get("/api/v1/play/").success(function(res){
-            $scope.loadData(res);
-        });
+        $http.get("/api/v1/play/");
     };
 
     $scope.playerNext = function(){
-        $http.get("/api/v1/play_next/").success(function(res) {
-            $scope.loadData(res);
-        })
+        $http.get("/api/v1/play_next/");
     };
 
     $scope.playerPrev = function(){
-        $http.get("/api/v1/play_prev/").success(function(res){
-            $scope.loadData(res);
-        });
+        $http.get("/api/v1/play_prev/");
 
     };
 
