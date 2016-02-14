@@ -66,60 +66,72 @@ def ok(conn, addr, type, version, key=None):
     return False
 
 
-def handle_client(conn, addr):
-    global msgid
-    print "%s:%s połączył się" % addr
-    is_registered = False
-    conn.write(escape(json.dumps({"request": "type"})))
-    msg = conn.read()
-    buff = ""
-    while msg:
-        buff += msg
-        parsed_msg = PATTERN_MSG.findall(buff)
-        if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
-            buff = parsed_msg[0][1]
-            esc_string = parsed_msg[0][0]
-            try:
-                data = json.loads(un_escape(esc_string))
-                print "%s:%s: %s" % (addr[0], addr[1], data)
-                if "request" in data:
-                    if conn != radio and radio and is_registered:
-                        msgid += 1
-                        datacpy = dict(data)
-                        datacpy["msgid"] = msgid
-                        queries[msgid] = conn
-                        radio.write(escape(json.dumps(datacpy)))
-                    elif conn == radio and not "msgid" in data or\
-                            (not is_registered and "request" in data and data["request"] == "ok"):
-                        datacpy = dict(data)
-                        target = binds[datacpy["request"]]["target"]
-                        send_response = datacpy["request"] != "ok"
-                        del datacpy["request"]
-                        ret = target(conn, addr, **datacpy)
-                        if send_response:
-                            conn.send(escape(json.dumps(ret)))
-                        else:
-                            is_registered = ret
-                    elif conn == radio and "msgid" in data:
-                        datacpy = dict(data)
-                        c = queries[datacpy["msgid"]]
-                        del datacpy["msgid"]
-                        c.write(escape(json.dumps(datacpy)))
-            except ValueError as e:
-                print [un_escape(esc_string)]
-                print e
+class ClientHandler(Thread):
+    def __init__(self, conn, addr):
+        Thread.__init__(self)
+        self.daemon = True
+        self.__was_stopped = False
+        self.conn = conn
+        self.addr = addr
 
-        msg = conn.read()
-    conn.close()
-    print "%s:%s rozłączył się" % addr
+    def run(self):
+        global msgid
+        print "%s:%s połączył się" % self.addr
+        is_registered = False
+        self.conn.write(escape(json.dumps({"request": "type"})))
+        msg = self.conn.read()
+        buff = ""
+        while msg and not self.__was_stopped:
+            buff += msg
+            parsed_msg = PATTERN_MSG.findall(buff)
+            if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
+                buff = parsed_msg[0][1]
+                esc_string = parsed_msg[0][0]
+                try:
+                    data = json.loads(un_escape(esc_string))
+                    print "%s:%s: %s" % (self.addr[0], self.addr[1], data)
+                    if "request" in data:
+                        if self.conn != radio and radio and is_registered:
+                            msgid += 1
+                            datacpy = dict(data)
+                            datacpy["msgid"] = msgid
+                            queries[msgid] = self.conn
+                            radio.write(escape(json.dumps(datacpy)))
+                        elif self.conn == radio and not "msgid" in data or\
+                                (not is_registered and "request" in data and data["request"] == "ok"):
+                            datacpy = dict(data)
+                            target = binds[datacpy["request"]]["target"]
+                            send_response = datacpy["request"] != "ok"
+                            del datacpy["request"]
+                            ret = target(self.conn, self.addr, **datacpy)
+                            if send_response:
+                                self.conn.send(escape(json.dumps(ret)))
+                            else:
+                                is_registered = ret
+                        elif self.conn == radio and "msgid" in data:
+                            datacpy = dict(data)
+                            c = queries[datacpy["msgid"]]
+                            del datacpy["msgid"]
+                            c.write(escape(json.dumps(datacpy)))
+                except ValueError as e:
+                    print [un_escape(esc_string)]
+                    print e
+
+            msg = self.conn.read()
+        self.conn.close()
+        print "%s:%s rozłączył się" % self.addr
+
+    def stop(self):
+        self.__was_stopped = True
 
 
 def main():
     bind_socket = socket.socket()
+    bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bind_socket.bind((config.listen_host, config.listen_port))
     print "Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port)
     bind_socket.listen(5)
-    conns = []
+    handlers = []
     try:
         while True:
             new_socket, from_addr = bind_socket.accept()
@@ -127,10 +139,13 @@ def main():
                                    server_side=True,
                                    certfile=config.ssl_cert_file,
                                    keyfile=config.ssl_key_file)
-            conns.append(conn)
-            Thread(target=partial(handle_client, conn, from_addr)).start()
-
+            handler = ClientHandler(conn, from_addr)
+            handler.start()
+            handlers.append(handler)
     except KeyboardInterrupt:
+        for handler in handlers:
+            handler.stop()
+
         bind_socket.shutdown(socket.SHUT_RDWR)
         bind_socket.close()
 
