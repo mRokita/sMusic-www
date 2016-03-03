@@ -1,3 +1,7 @@
+function str_pad_left(string) {
+    return ("0"+string).slice(-2);
+}
+
 var app = angular.module('sMusic', []);
 app.controller('libraryMainView', function($scope, $http){
     $scope.loadData = function(){
@@ -98,8 +102,9 @@ app.controller('playerStatus', function($scope, $http, $interval){
                     $scope.albumArtURL = newAlbumArtURL;
                 $scope.position = 0;
                 $scope.duration = 0;
-                $scope.duration_readable = "00:00";
             }
+            $scope.position_readable = str_pad_left((($scope.position-$scope.position%60))/60).toString()+":"+str_pad_left(($scope.position%60).toString());
+            $scope.duration_readable = str_pad_left((($scope.duration-$scope.duration%60))/60).toString()+":"+str_pad_left(($scope.duration%60).toString());
         };
         if (typeof status === "undefined")
             $http.get("/api/v1/status/").success(loadFromStatus);
