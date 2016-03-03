@@ -75,7 +75,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
             $scope.volume = response['status']['vol_left'];
             $scope.isFileLoaded = response['status'].hasOwnProperty('file');
             $scope.isLocked = response['status']['locked'];
-            $scope.isPlaying= response['status']['status'] !== "paused";
+            $scope.isPlaying = response['status']['status'] == "playing";
             $scope.hideButtons = $scope.isLocked && !$scope.isPlaying;
             var newAlbumArtURL;
             if($scope.isFileLoaded) {

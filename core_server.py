@@ -135,13 +135,18 @@ def main():
     try:
         while True:
             new_socket, from_addr = bind_socket.accept()
-            conn = ssl.wrap_socket(new_socket,
-                                   server_side=True,
-                                   certfile=config.ssl_cert_file,
-                                   keyfile=config.ssl_key_file)
-            handler = ClientHandler(conn, from_addr)
-            handler.start()
-            handlers.append(handler)
+            try:
+                conn = ssl.wrap_socket(new_socket,
+                                       server_side=True,
+                                       certfile=config.ssl_cert_file,
+                                       keyfile=config.ssl_key_file)
+
+                handler = ClientHandler(conn, from_addr)
+                handler.start()
+                handlers.append(handler)
+            except ssl.SSLError:
+                pass
+
     except KeyboardInterrupt:
         for handler in handlers:
             handler.stop()
