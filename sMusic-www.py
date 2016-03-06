@@ -86,6 +86,10 @@ admin_perm = Permission(RoleNeed("admin"))
 music_control_perm = Permission(RoleNeed("dj"))
 library_browse_perm = Permission(RoleNeed("ANY"))
 
+@app.context_processor
+def inject_is_admin():
+    return dict(is_admin=admin_perm.can())
+
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"

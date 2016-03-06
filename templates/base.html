@@ -24,6 +24,9 @@
                     <ul id="nav-mobile" class="right hide-on-med-and-down">
                         {% if current_user.is_authenticated() %}
                             <li>{{ current_user.display_name }}</li>
+                            {% if is_admin %}
+                            <li><a style="text-decoration:none" href="/admin">Administracja</a></li>
+                            {% endif %}
                             <li><a style="text-decoration:none" href="/logout">Wyloguj</a></li>
                         {% else %}
                             <li><a style="text-decoration:none" href="/login">Zaloguj</a></li>
