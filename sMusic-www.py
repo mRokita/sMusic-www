@@ -225,9 +225,10 @@ def create_default_user():
     adm_role = get_or_create(db.session, Role, name='admin')
     dj_role = get_or_create(db.session, Role, name='dj')
     admin = get_or_create(db.session, User, login=config.admin_login)
-    admin.password=pwd_context.encrypt(config.admin_password)
-    admin.roles=[adm_role, dj_role]
-    db.session.add(admin)
+    admin.password = pwd_context.encrypt(config.admin_password)
+    admin.roles = [adm_role, dj_role]
+    admin.active = True
+    admin.commit = "admin z config.py, zawsze posiada hasło z config.py"
     db.session.commit()
 
 
