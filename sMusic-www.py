@@ -2,8 +2,9 @@
 from __future__ import print_function
 from functools import wraps
 import flask
-from flask import request, Response, Flask, render_template, redirect, current_app, session
+from flask import request, Response, Flask, render_template, redirect, current_app, session, Markup
 import radio_utils
+from forms import *
 import json
 import sys
 import config
@@ -11,9 +12,6 @@ import re
 from urllib import urlopen, urlencode
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
-from flask_wtf import Form
-from wtforms import StringField, PasswordField
-from wtforms.validators import DataRequired
 from flask.ext.principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
     UserNeed
 
@@ -60,17 +58,13 @@ class User(db.Model, UserMixin):
     def __init__(self, login, password, roles):
         self.login = login
         self.password = password
-        self.active = False
+        self.active = True
         self.roles = roles
 
 principals = Principal(app)
 login_manager = LoginManager(app)
 login_manager.init_app(app)
-
-
-class LoginForm(Form):
-    login = StringField(validators=[DataRequired()])
-    password = PasswordField(validators=[DataRequired()])
+login_manager.login_view = "login"
 
 
 @login_manager.user_loader
@@ -81,19 +75,22 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+    message = ""
 
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
 
-        if form.password.data == user.password:
+        if user is not None and form.password.data == user.password:
             login_user(user)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
             flask.flash('Logged in successfully.')
 
-            return redirect(request.args.get('next') or '/')  # TODO: podobno nalezy validowac next
+            return form.redirect()
+        else:
+            message = Markup(u'Bledny login, haslo lub użytkownik nie istnieje (WOW! Tyle opcji WOW! WOW!) <img class="responsive-img" src="https://cdn2.hubspot.net/hubfs/498921/Blog/Doge_Error_Codes.jpg?t=1455300506486">')
 
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, message=message)
 
 
 @app.route("/logout")
