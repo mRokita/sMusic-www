@@ -75,22 +75,22 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    message = ""
+    wrong_login = False
 
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
 
         if user is not None and form.password.data == user.password:
-            login_user(user)
+            login_user(user, remember=form.remember)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
             flask.flash('Logged in successfully.')
 
             return form.redirect()
         else:
-            message = Markup(u'Bledny login, haslo lub użytkownik nie istnieje (WOW! Tyle opcji WOW! WOW!) <img class="responsive-img" src="https://cdn2.hubspot.net/hubfs/498921/Blog/Doge_Error_Codes.jpg?t=1455300506486">')
+            wrong_login = True
 
-    return render_template('login.html', form=form, message=message)
+    return render_template('login.html', form=form, wrong_login=wrong_login)
 
 
 @app.route("/logout")
