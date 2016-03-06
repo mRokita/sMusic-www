@@ -13,7 +13,8 @@ from urllib import urlopen, urlencode
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from flask.ext.principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
-    UserNeed
+    UserNeed, Permission
+from passlib.apps import custom_app_context as pwd_context
 
 app = Flask(__name__)
 
@@ -57,11 +58,14 @@ class User(db.Model, UserMixin):
 
     def __init__(self, login, password, roles):
         self.login = login
-        self.password = password
+        self.password = pwd_context.encrypt(password)
         self.active = True
         self.roles = roles
 
 principals = Principal(app)
+admin_perm = Permission(RoleNeed('admin'))
+music_control_perm = Permission(RoleNeed('player'))
+
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -80,7 +84,7 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
 
-        if user is not None and form.password.data == user.password:
+        if user is not None and pwd_context.verify(form.password.data, user.password):
             login_user(user, remember=form.remember)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
