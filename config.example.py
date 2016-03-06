@@ -8,6 +8,6 @@ listen_host = "0.0.0.0"
 radio_key = "dafekIWska"
 admin_login = "ert"
 admin_password = "secret"
-database_uri = 'sqlite://'
+database_uri = 'sqlite:///baza.db'
 secret_key = "bardzotajnyklucz-asdfdrfjknaweaweklankaewndsadcnnscadmacaeaewawawedajkqwxaweozkzaokwoe"
 ldap_host = "ad.staszic.waw.pl"
