@@ -67,6 +67,8 @@ class User(db.Model, UserMixin):
 
 principals = Principal(app)
 admin_perm = Permission(RoleNeed('admin'))
+dj_perm = Permission(RoleNeed('dj'))
+
 music_control_perm = Permission(RoleNeed('player'))
 
 login_manager = LoginManager(app)
@@ -161,7 +163,9 @@ def create_default_user():
     db.create_all()
     adm_role = Role('admin')
     db.session.add(adm_role)
-    admin = User(config.admin_login, config.admin_password, [adm_role])
+    dj_role = Role('dj')
+    db.session.add(dj_role)
+    admin = User(config.admin_login, config.admin_password, [adm_role, dj_role])
     db.session.add(admin)
     db.session.commit()
 
@@ -172,21 +176,13 @@ def fix_chars(string):
     return string
 
 
-def check_auth():
-    """
-    Ta funkcja sprawdza, czy dane logowania są prawidłowe
-    """
-    auth = request.authorization
-    return auth and auth.username == config.admin_login and auth.password == config.admin_password
-
-
 def render_template_with_args(template, **kwargs):
     return render_template(template, radio_utils=radio_utils, version=__version__, **kwargs)
 
 
 @app.route('/')
 def ui_player():
-    return render_template_with_args("player.html", is_logged_in = check_auth())
+    return render_template_with_args("player.html")
 
 
 @app.route('/library/')
@@ -233,25 +229,25 @@ def api_v1_library_artist_album(artist, album):
 
 
 @app.route('/api/v1/play_next/')
-@login_required
+@dj_perm.require()
 def api_v1_play_next():
     return json.dumps(radio_utils.play_next())
 
 
 @app.route('/api/v1/play_prev/')
-@login_required
+@dj_perm.require()
 def api_v1_play_prev():
     return json.dumps(radio_utils.play_prev())
 
 
 @app.route('/api/v1/pause/')
-@login_required
+@dj_perm.require()
 def api_v1_pause():
     return json.dumps(radio_utils.pause())
 
 
 @app.route('/api/v1/vol/<value>/')
-@login_required
+@dj_perm.require()
 def api_v1_vol(value):
     return json.dumps(radio_utils.set_vol(value))
 
@@ -262,19 +258,19 @@ def api_v1_status():
 
 
 @app.route('/api/v1/clear_q_and_play/<artist_id>/<album_id>/<track_id>/')
-@login_required
+@dj_perm.require()
 def api_v1_clear_q_and_play(artist_id, album_id, track_id):
     return json.dumps(radio_utils.clear_queue_and_play(artist_id, album_id, track_id))
 
 
 @app.route('/api/v1/clear_queue/')
-@login_required
+@dj_perm.require()
 def api_v1_clear_queue():
     return json.dumps(radio_utils.clear_queue())
 
 
 @app.route('/api/v1/add_to_q/<artist_id>/<album_id>/<track_id>/')
-@login_required
+@dj_perm.require()
 def api_v1_add_to_q(artist_id, album_id, track_id):
     return json.dumps(radio_utils.add_to_queue(artist_id, album_id, track_id))
 
@@ -297,7 +293,7 @@ def api_v1_album_art(artist, album):
 
 
 @app.route('/api/v1/play/')
-@login_required
+@dj_perm.require()
 def play():
     return json.dumps(radio_utils.play())
 
