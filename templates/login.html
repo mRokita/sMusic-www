@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}sMusic-www - Minimal Preview{% endblock %}
+{% block menu %}
+    <div class="hide-on-med-and-down">
+        {% include "search_box.html" %}
+    </div>
+    {{ super() }}
+    <div class="hide-on-large-only">
+        {% include "search_box.html" %}
+    </div>
+{% endblock %}
+{% block menu_links %}
+    <a href="/" class="collection-item blue-text">Panel główny</a>
+    <a href="/library/" class="collection-item active blue">Biblioteka muzyczna</a>
+    <a href="#" class="collection-item blue-text">Kalendarz</a>
+{% endblock %}
+{% block menu_links_mobile %}
+    <li><a href="/" class="collection-item">Panel główny</a></li>
+    <li><a href="/library/" class="collection-item">Biblioteka muzyczna</a></li>
+    <li><a href="#" class="collection-item">Kalendarz</a></li>
+{% endblock %}
+{% block dropdown_title %}
+Biblioteka muzyczna
+{% endblock %}
+{% block main %}
+    <div class="row card-panel white" style="padding:0px;">
+        <div class="col l5 m6 s12">
+            <form method="POST" action="/login">
+                {{ form.hidden_tag() }}
+                {{ form.login.label }} {{ form.login(size=20) }}
+                {{ form.password.label }} {{ form.password(size=20) }}
+                <input type="submit" value="Go">
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script type="text/javascript" src="/static/js/main.js"></script>
+{% endblock %}
