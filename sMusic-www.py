@@ -15,6 +15,7 @@ from flask.ext.login import LoginManager, login_user, logout_user, login_require
 from flask.ext.principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
     UserNeed, Permission
 from passlib.apps import custom_app_context as pwd_context
+import ldap3
 
 app = Flask(__name__)
 
@@ -53,11 +54,13 @@ class User(db.Model, UserMixin):
     login = db.Column(db.String(255), unique=True)
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())
+    display_name = db.Column(db.String(255))
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
 
     def __init__(self, login, password, roles):
         self.login = login
+        self.display_name = login
         self.password = pwd_context.encrypt(password)
         self.active = True
         self.roles = roles
@@ -69,6 +72,34 @@ music_control_perm = Permission(RoleNeed('player'))
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+
+def check_ldap_credentials(login, password):
+    try:
+        conn = ldap3.Connection(ldap3.Server(config.ldap_host, use_ssl=True), "cn=%s, cn=Users, dc=ad, dc=staszic, dc=waw, dc=pl" % login, password,
+                                auto_bind=True, raise_exceptions=False)
+        ret = conn.search("cn=Users, dc=ad, dc=staszic, dc=waw, dc=pl", "(cn=%s)" % login, attributes=['uidNumber', 'displayName'])
+        if not ret:
+            return False
+        data = conn.entries
+        if len(data) == 1:
+            ldap_data = dict()
+            ldap_data['login'] = login
+            ldap_data['uid'] = int(data[0]['uidNumber'][0])
+            # ldap_data['hash'] = sha256(password.encode('utf-16')).hexdigest() # TODO: sprawdzic, czy to na pewno jest dobry pomysl
+            ldap_data['class_id'] = int(int(str(data[0]['uidNumber'][0])[0:3]))
+            ldap_data['display_name'] = str(data[0]['displayName'][0])
+            return ldap_data
+        else:
+            return False
+    except KeyError:
+        return False
+    except IndexError:
+        return False
+    except ldap3.LDAPBindError:
+        return False
+    except ldap3.LDAPException as e:
+        raise e
 
 
 @login_manager.user_loader
@@ -83,13 +114,16 @@ def login():
 
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
-
-        if user is not None and pwd_context.verify(form.password.data, user.password):
+        ldap_user = check_ldap_credentials(form.login.data, form.password.data)
+        if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user):
+            if ldap_user:
+                if user.display_name != ldap_user['display_name']:
+                    user.display_name = ldap_user['display_name']
+                    db.session.commit()
             login_user(user, remember=form.remember)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
             flask.flash('Logged in successfully.')
-
             return form.redirect()
         else:
             wrong_login = True
