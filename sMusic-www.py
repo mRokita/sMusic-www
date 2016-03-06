@@ -13,9 +13,14 @@ from urllib import urlopen, urlencode
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from flask.ext.principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
-    UserNeed, Permission
+    UserNeed, Permission, PermissionDenied
+from flask_admin import Admin, AdminIndexView
+import flask_admin
+from flask_admin.contrib import sqlamodel as sqla
 from passlib.apps import custom_app_context as pwd_context
 import ldap3
+import os
+import logging
 
 app = Flask(__name__)
 
@@ -48,6 +53,9 @@ class Role(db.Model):
     def __init__(self, name):
         self.name = name
 
+    def __str__(self):
+        return "%s - %s" % (self.id, self.name)
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,23 +65,54 @@ class User(db.Model, UserMixin):
     display_name = db.Column(db.String(255))
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    comment = db.Column(db.String(255))
 
-    def __init__(self, login, password, roles):
+    def __init__(self):
+        pass
+
+    def __init__(self, login="none", password=os.urandom(32), roles=[]):
         self.login = login
         self.display_name = login
         self.password = pwd_context.encrypt(password)
         self.active = True
         self.roles = roles
 
+    def __str__(self):
+        return "%s - %s - %s" % (self.id, self.login, self.display_name)
+
 principals = Principal(app)
 admin_perm = Permission(RoleNeed('admin'))
 dj_perm = Permission(RoleNeed('dj'))
 
-music_control_perm = Permission(RoleNeed('player'))
-
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+
+class MyAdminIndexView(AdminIndexView):
+    @flask_admin.expose('/')
+    @admin_perm.require(http_exception=403)
+    def index(self):
+        return super(MyAdminIndexView, self).index()
+
+
+admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
+
+
+class UserAdmin(sqla.ModelView):
+    form_columns = ['login', 'display_name', 'password', 'active', 'roles', 'comment']
+    column_exclude_list = ['password']
+    column_display_pk = False
+    column_searchable_list = ('login', 'display_name')
+
+
+class RoleAdmin(sqla.ModelView):
+    can_create = False
+    can_delete = False
+    form_columns = ['users']
+
+admin.add_view(UserAdmin(User, db.session))
+admin.add_view(RoleAdmin(Role, db.session))
 
 
 def check_ldap_credentials(login, password):
@@ -111,6 +150,8 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated():
+        return redirect('index')
     form = LoginForm()
     wrong_login = False
 
@@ -131,6 +172,14 @@ def login():
             wrong_login = True
 
     return render_template('login.html', form=form, wrong_login=wrong_login)
+
+
+@app.errorhandler(403)
+def permission_denied_handler(e):
+    if current_user.is_authenticated():
+        return render_template('permission_denied.html')
+    else:
+        return redirect(url_for('login', next=request.url))
 
 
 @app.route("/logout")
@@ -229,25 +278,25 @@ def api_v1_library_artist_album(artist, album):
 
 
 @app.route('/api/v1/play_next/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_play_next():
     return json.dumps(radio_utils.play_next())
 
 
 @app.route('/api/v1/play_prev/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_play_prev():
     return json.dumps(radio_utils.play_prev())
 
 
 @app.route('/api/v1/pause/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_pause():
     return json.dumps(radio_utils.pause())
 
 
 @app.route('/api/v1/vol/<value>/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_vol(value):
     return json.dumps(radio_utils.set_vol(value))
 
@@ -258,19 +307,19 @@ def api_v1_status():
 
 
 @app.route('/api/v1/clear_q_and_play/<artist_id>/<album_id>/<track_id>/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_clear_q_and_play(artist_id, album_id, track_id):
     return json.dumps(radio_utils.clear_queue_and_play(artist_id, album_id, track_id))
 
 
 @app.route('/api/v1/clear_queue/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_clear_queue():
     return json.dumps(radio_utils.clear_queue())
 
 
 @app.route('/api/v1/add_to_q/<artist_id>/<album_id>/<track_id>/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def api_v1_add_to_q(artist_id, album_id, track_id):
     return json.dumps(radio_utils.add_to_queue(artist_id, album_id, track_id))
 
@@ -293,7 +342,7 @@ def api_v1_album_art(artist, album):
 
 
 @app.route('/api/v1/play/')
-@dj_perm.require()
+@dj_perm.require(http_exception=403)
 def play():
     return json.dumps(radio_utils.play())
 
