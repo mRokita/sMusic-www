@@ -10,14 +10,14 @@ import sys
 import config
 import re
 from urllib import urlopen, urlencode
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin,\
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin,\
     fresh_login_required
-from flask.ext.principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
+from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
     UserNeed, Permission, PermissionDenied
 from flask_admin import Admin, AdminIndexView
 import flask_admin
-from flask_admin.contrib import sqlamodel as sqla
+from flask_admin.contrib import sqla
 from passlib.apps import custom_app_context as pwd_context
 import ldap3
 import os
@@ -178,9 +178,10 @@ def login():
     return render_template('login.html', form=form, wrong_login=wrong_login)
 
 
-@app.errorhandler(403)
+#@app.errorhandler(403)
 def permission_denied_handler(e):
-    if current_user.is_authenticated():
+    print (e)
+    if current_user.is_authenticated:
         return render_template('permission_denied.html')
     else:
         return redirect(url_for('login', next=request.url))
