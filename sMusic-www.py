@@ -177,8 +177,11 @@ def login():
 
     return render_template('login.html', form=form, wrong_login=wrong_login)
 
+@login_manager.needs_refresh_handler
+def refresh():
+    return redirect(url_for('login', next=request.url))
 
-#@app.errorhandler(403)
+@app.errorhandler(403)
 def permission_denied_handler(e):
     print (e)
     if current_user.is_authenticated:
