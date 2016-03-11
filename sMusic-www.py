@@ -12,7 +12,7 @@ import re
 from urllib import urlopen, urlencode
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin,\
-    fresh_login_required
+    fresh_login_required, user_logged_in
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
     UserNeed, Permission, PermissionDenied
 from flask_admin import Admin, AdminIndexView
@@ -62,7 +62,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(255), unique=True)
     password = db.Column(db.String(255))
-    active = db.Column(db.Boolean())
+    is_active = db.Column(db.Boolean())
     display_name = db.Column(db.String(255))
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
@@ -75,7 +75,7 @@ class User(db.Model, UserMixin):
         self.login = login
         self.display_name = login
         self.password = pwd_context.encrypt(password)
-        self.active = True
+        self.is_active = True
         self.roles = roles
 
     def __str__(self):
@@ -93,6 +93,10 @@ def inject_is_admin():
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
+login_manager.needs_refresh_message = (
+    u"To protect your account, please reauthenticate to access this page."
+)
+login_manager.needs_refresh_message_category = "info"
 
 
 class MyAdminIndexView(AdminIndexView):
@@ -107,7 +111,7 @@ admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
 
 
 class UserAdmin(sqla.ModelView):
-    form_columns = ['login', 'display_name', 'password', 'active', 'roles', 'comment']
+    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment']
     column_exclude_list = ['password']
     column_display_pk = False
     column_searchable_list = ('login', 'display_name')
@@ -157,6 +161,8 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+    if hasattr(current_user, 'login'):
+        form.login.data = current_user.login
     wrong_login = False
 
     if form.validate_on_submit():
@@ -202,6 +208,12 @@ def logout():
     return redirect('/')
 
 
+@principals.identity_loader
+def load_identity_when_session_expires():  # restores the identity when restoring from "remember me"
+    if hasattr(current_user, 'id'):
+        return Identity(current_user.id)
+
+
 @identity_loaded.connect_via(app)
 def on_identity_loaded(sender, identity):
     # Set the identity user object
@@ -235,7 +247,7 @@ def create_default_user():
     admin = get_or_create(db.session, User, login=config.admin_login)
     admin.password = pwd_context.encrypt(config.admin_password)
     admin.roles = [adm_role, dj_role]
-    admin.active = True
+    admin.is_active = True
     admin.commit = "admin z config.py, zawsze posiada hasło z config.py"
     db.session.commit()
 
