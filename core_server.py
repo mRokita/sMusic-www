@@ -81,7 +81,7 @@ class ClientHandler(Thread):
         self.conn.write(escape(json.dumps({"request": "type"})))
         msg = self.conn.read()
         buff = ""
-        while msg and not self.__was_stopped:
+        while msg and not self.__was_stopped and not was_killed:
             buff += msg
             parsed_msg = PATTERN_MSG.findall(buff)
             if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
@@ -111,6 +111,7 @@ class ClientHandler(Thread):
                         elif self.conn == radio and "msgid" in data:
                             datacpy = dict(data)
                             c = queries[datacpy["msgid"]]
+                            del queries[datacpy["msgid"]]
                             del datacpy["msgid"]
                             c.write(escape(json.dumps(datacpy)))
                 except ValueError as e:
@@ -126,12 +127,12 @@ class ClientHandler(Thread):
 
 
 def main():
+    global was_killed
     bind_socket = socket.socket()
     bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bind_socket.bind((config.listen_host, config.listen_port))
     print "Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port)
     bind_socket.listen(5)
-    handlers = []
     try:
         while True:
             new_socket, from_addr = bind_socket.accept()
@@ -143,14 +144,11 @@ def main():
 
                 handler = ClientHandler(conn, from_addr)
                 handler.start()
-                handlers.append(handler)
             except ssl.SSLError:
                 pass
 
     except KeyboardInterrupt:
-        for handler in handlers:
-            handler.stop()
-
+        was_killed = True
         bind_socket.shutdown(socket.SHUT_RDWR)
         bind_socket.close()
 
@@ -160,4 +158,5 @@ if __name__ == "__main__":
           ("sMusic-www/core_server v{}".format(__version__).center(45, " "))+"|\n|"+\
           ("https://github.com/mRokita/sMusic-www").center(45, " ")+\
           "|\n+---------------------------------------------+\n"
+    was_killed = False
     main()
