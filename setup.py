@@ -12,7 +12,7 @@ setup(name="sMusicServer",
       keywords=["smusic", "www", "server", "serwer", "staszic", "music"],
       author="Michał Rokita & Artur Puzio",
       author_email="mrokita@mrokita.pl & cytadela88@gmail.com",
-      packages=["smusicwww", "smusicwww/static"],
+      packages=["smusicwww"],
       package_data={
           'smusicwww': ["static/*",
                         "static/js/*",
