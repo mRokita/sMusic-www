@@ -1,0 +1,4 @@
+include LICENSE
+include README.md
+recursive-include smusicwww/static *
+recursive-include smusicwww/templates *
