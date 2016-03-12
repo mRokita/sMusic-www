@@ -19,7 +19,8 @@ def recursive_paths(dir):
 
 data = ['smusicwww/static/js/main.js',
         'smusicwww/static/materialize/js/materialize.min.js',
-        'smusicwww/static/materialize/js/materialize.js', 'smusicwww/static/materialize/LICENSE',
+        'smusicwww/static/materialize/js/materialize.js',
+         'smusicwww/static/materialize/LICENSE',
         'smusicwww/static/materialize/font/roboto/Roboto-Medium.woff2',
         'smusicwww/static/materialize/font/roboto/Roboto-Regular.ttf',
         'smusicwww/static/materialize/font/roboto/Roboto-Medium.eot',
