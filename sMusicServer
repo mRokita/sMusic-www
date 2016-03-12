@@ -5,17 +5,15 @@ Bardzo minimalny testowy serwer TCP
 """
 import socket
 import ssl
-import config
 from base64 import b64decode, b64encode
 import json
 import re
-import sys
 from inspect import getargspec
 from threading import Thread
-from functools import partial
+from smusicwww import logs
+from smusicwww import config
+from smusicwww import __version__
 
-
-__version__ = "0.1.1 Alpha"
 msgid = 0
 binds = {}
 queries = {}
@@ -49,7 +47,6 @@ def un_escape(msg):
 @bind
 def ok(conn, addr, type, version, key=None):
     global radio
-    print "OK"
     if version != __version__:
         conn.send(escape(json.dumps({u"request": u"error",
                                      u"type": u"incompatibleVersions",
@@ -58,10 +55,10 @@ def ok(conn, addr, type, version, key=None):
         return False
     if type == "radio" and config.radio_key == key:
         radio = conn
-        print "%s:%s został zarejestrowany jako RADIO" % addr
+        logs.print_debug("%s:%s został zarejestrowany jako RADIO" % addr)
         return True
     if type == "www" and addr[0] == "127.0.0.1":
-        print "%s:%s został zarejestrowany jako WWW" % addr
+        logs.print_debug("%s:%s został zarejestrowany jako WWW" % addr)
         return True
     return False
 
@@ -76,7 +73,7 @@ class ClientHandler(Thread):
 
     def run(self):
         global msgid
-        print "%s:%s połączył się" % self.addr
+        logs.print_debug("%s:%s połączył się" % self.addr)
         is_registered = False
         self.conn.write(escape(json.dumps({"request": "type"})))
         msg = self.conn.read()
@@ -89,7 +86,7 @@ class ClientHandler(Thread):
                 esc_string = parsed_msg[0][0]
                 try:
                     data = json.loads(un_escape(esc_string))
-                    print "%s:%s: %s" % (self.addr[0], self.addr[1], data)
+                    logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
                     if "request" in data:
                         if self.conn != radio and radio and is_registered:
                             msgid += 1
@@ -120,7 +117,7 @@ class ClientHandler(Thread):
 
             msg = self.conn.read()
         self.conn.close()
-        print "%s:%s rozłączył się" % self.addr
+        logs.print_debug("%s:%s rozłączył się" % self.addr)
 
     def stop(self):
         self.__was_stopped = True
@@ -131,7 +128,7 @@ def main():
     bind_socket = socket.socket()
     bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bind_socket.bind((config.listen_host, config.listen_port))
-    print "Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port)
+    logs.print_info("Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port))
     bind_socket.listen(5)
     try:
         while True:
@@ -154,9 +151,10 @@ def main():
 
 
 if __name__ == "__main__":
-    print "+---------------------------------------------+\n|"+\
-          ("sMusic-www/core_server v{}".format(__version__).center(45, " "))+"|\n|"+\
-          ("https://github.com/mRokita/sMusic-www").center(45, " ")+\
-          "|\n+---------------------------------------------+\n"
+    logs.setup_logging()
+    logs.print_info("\n+---------------------------------------------+\n|" +
+          ("sMusic-www/sMusicServer v{}".format(__version__).center(45, " "))+"|\n|" +
+          "https://github.com/mRokita/sMusic-www".center(45, " ") +
+          "|\n+---------------------------------------------+\n")
     was_killed = False
     main()

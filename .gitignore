@@ -17,7 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-config.py
+smusicwww/config.py
 .idea/
 .idea/workspace.xml
 lib/

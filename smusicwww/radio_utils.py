@@ -1,11 +1,10 @@
 import socket
 import ssl
-import config
 import json
 from base64 import b64encode, b64decode
 
-
-__version__ = "0.1.1 Alpha"
+import config
+from __init__ import __version__
 
 
 def escape(msg):

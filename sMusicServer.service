@@ -1,0 +1,11 @@
+[Unit]
+Description=Serwer sMusic
+After=network.target
+
+[Service]
+TimeoutStartSec=0
+ExecStart=/usr/bin/sMusicServer
+Restart=always
+
+[Install]
+WantedBy=default.target
