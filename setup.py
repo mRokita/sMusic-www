@@ -4,6 +4,22 @@
 from distutils.core import setup
 from smusicwww import __version__
 from os import listdir
+from os.path import isdir, join
+
+
+def recursive_paths(dir):
+    paths = []
+    for f in listdir(dir):
+        if isdir(join(dir, f)):
+            paths.extend(recursive_paths(join(dir, f)))
+        else:
+            paths.append(join(dir, f))
+
+    return paths
+
+data = []
+data.extend(recursive_paths("smusicwww/static"))
+data.extend(recursive_paths("smusicwww/templates"))
 
 setup(name="sMusicServer",
       version=__version__,
@@ -15,15 +31,7 @@ setup(name="sMusicServer",
       author_email="mrokita@mrokita.pl & cytadela88@gmail.com",
       packages=["smusicwww"],
       package_data={
-        'smusicwww': ['templates/*.html',
-                      'static/*',
-                      'static/css/*',
-                      'static/js/*',
-                      'static/materialize/*',
-                      'static/materialize/css/*',
-                      'static/materialize/font/roboto/*',
-                      'static/materialize/font/material-design-icons/*',
-                      'static/materialize/js/*'],
+        'smusicwww': data
       },
       scripts=["sMusicServer"],
       requires=["flask", "jinja2"],
