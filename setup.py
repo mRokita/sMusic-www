@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from distutils.core import setup
 from smusicwww import __version__
 
 setup(name="sMusicServer",
