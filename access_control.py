@@ -13,8 +13,9 @@ from passlib.apps import custom_app_context as pwd_context
 
 from forms import LoginForm
 from shared import app, db
-from utils import get_or_create
+from utils import get_or_create, secure_random_string_generator
 import config
+import os
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -48,6 +49,8 @@ class User(db.Model, UserMixin):
     def __init__(self, login="none", password="", roles=[]):
         self.login = login
         self.display_name = login
+        if password == "":
+            password = secure_random_string_generator(32)
         self.password = pwd_context.encrypt(password)
         self.is_active = True
         self.roles = roles
@@ -151,8 +154,14 @@ def login():
     wrong_login = False
 
     if form.validate_on_submit():
-        user = User.query.filter_by(login=form.login.data).first()
         ldap_user = check_ldap_credentials(form.login.data, form.password.data)
+        user = User.query.filter_by(login=form.login.data).first()
+        if user is None and ldap_user:
+            new_user = User(login=form.login.data)
+            new_user.comment = "Auto import from LDAP %s" % config.ldap_host
+            db.session.add(new_user)
+            db.session.commit()
+            user = new_user
         if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user):
             if ldap_user:
                 if user.display_name != ldap_user['display_name']:

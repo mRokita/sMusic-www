@@ -1,4 +1,6 @@
 #-*- coding: utf-8 -*-
+import random
+import string
 
 
 def get_or_create(session, model, **kwargs):
@@ -10,3 +12,7 @@ def get_or_create(session, model, **kwargs):
         session.add(instance)
         session.commit()
         return instance
+
+
+def secure_random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.SystemRandom().choice(chars) for _ in range(size))
