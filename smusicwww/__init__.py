@@ -1,5 +1,4 @@
 import config
 import logs
-import radio_utils
-import smusicwww
+import shared
 __version__ = "0.1.9"

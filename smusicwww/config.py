@@ -3,6 +3,7 @@ sMusic-www - config
 """
 import ConfigParser
 import os.path
+import json
 
 conf = ConfigParser.ConfigParser()
 config_paths = ["server.ini", "/etc/sMusic/server.ini", "/etc/sMusic/server.default.ini", "server.default.ini"]
@@ -26,6 +27,10 @@ ssl_cert_file = conf.get("Security", "ssl_cert_file")
 ssl_key_file = conf.get("Security", "ssl_key_file")
 log_path = conf.get("Logs", "path")
 
-virtualenv = conf.get("WWW", "virtualenv")
+virtualenv = conf.getboolean("WWW", "virtualenv")
 admin_login = conf.get("WWW", "admin_login")
 admin_password = conf.get("WWW", "admin_password")
+super_admin = json.loads(conf.get("WWW", "super_admins"))
+database_uri = conf.get("WWW", "database_uri")
+secret_key = conf.get("Security", "secret_key")
+ldap_host = conf.get("WWW", "ldap_server")

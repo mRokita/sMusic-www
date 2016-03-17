@@ -18,7 +18,22 @@
 
     <main class="row">
         <div class="col s12 m12 l12">
-            <h1 class="center-align hide-on-med-and-down white-text card-panel blue">sMusic</h1>
+            <nav>
+                <div class="nav-wrapper blue">
+                    <a href="#" class="brand-logo center white-text">sMusic</a>
+                    <ul id="nav-mobile" class="right hide-on-med-and-down">
+                        {% if current_user.is_authenticated %}
+                            <li>{{ current_user.display_name }}</li>
+                            {% if is_admin %}
+                            <li><a style="text-decoration:none" href="/admin">Administracja</a></li>
+                            {% endif %}
+                            <li><a style="text-decoration:none" href="/logout">Wyloguj</a></li>
+                        {% else %}
+                            <li><a style="text-decoration:none" href="/login">Zaloguj</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
         </div>
         <div class="col s12 m12 l3">
             {% block menu %}
