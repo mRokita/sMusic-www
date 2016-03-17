@@ -1,8 +1,9 @@
 #-*- coding: utf-8 -*-
 from flask import request, render_template, redirect, current_app, session, url_for
+from werkzeug.routing import RequestRedirect
 import flask
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin,\
-    fresh_login_required
+    fresh_login_required, login_fresh
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
     UserNeed, Permission
 from flask_admin import Admin, AdminIndexView
@@ -131,14 +132,13 @@ def check_ldap_credentials(login, password):
 
 
 def fill_database():
-    adm_role = get_or_create(db.session, Role, name='admin')
+    admin_role = get_or_create(db.session, Role, name='admin')
     dj_role = get_or_create(db.session, Role, name='dj')
     admin = get_or_create(db.session, User, login=config.admin_login)
     admin.password = pwd_context.encrypt(config.admin_password)
-    admin.roles = [adm_role, dj_role]
+    admin.roles = [admin_role, dj_role]
     admin.is_active = True
     admin.commit = "admin z config.py, zawsze posiada hasło z config.py"
-
 
 
 @login_manager.user_loader
@@ -149,8 +149,6 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if hasattr(current_user, 'login'):
-        form.login.data = current_user.login
     wrong_login = False
 
     if form.validate_on_submit():
@@ -162,7 +160,8 @@ def login():
             db.session.add(new_user)
             db.session.commit()
             user = new_user
-        if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user):
+        if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user or
+                                super_admin_can_check()):
             if ldap_user:
                 if user.display_name != ldap_user['display_name']:
                     user.display_name = ldap_user['display_name']
@@ -174,6 +173,9 @@ def login():
             return form.redirect()
         else:
             wrong_login = True
+    else:
+        if hasattr(current_user, 'login'):
+            form.login.data = current_user.login
 
     return render_template('login.html', form=form, wrong_login=wrong_login)
 
@@ -220,3 +222,18 @@ def on_identity_loaded(sender, identity):
         for role in current_user.roles:
             identity.provides.add(RoleNeed(role.name))
     identity.provides.add(RoleNeed("ANY"))
+
+    if hasattr(current_user, 'login') and current_user.login in config.super_admin:
+        identity.provides.add(RoleNeed('super_admin'))
+        for role in Role.query.all():
+            identity.provides.add(RoleNeed(role.name))
+
+
+def super_admin_can_check():
+    if hasattr(current_user, 'login') and current_user.login in config.super_admin:
+        if login_fresh():
+            return True
+        else:
+            raise RequestRedirect(url_for('login', next=request.url))
+    else:
+        return False
