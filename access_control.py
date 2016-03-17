@@ -1,10 +1,10 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from flask import request, render_template, redirect, current_app, session, url_for
 from werkzeug.routing import RequestRedirect
 import flask
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin,\
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin, \
     fresh_login_required, login_fresh
-from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed,\
+from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed, \
     UserNeed, Permission
 from flask_admin import Admin, AdminIndexView
 import flask_admin
@@ -16,7 +16,6 @@ from forms import LoginForm
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
 import config
-import os
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -44,10 +43,9 @@ class User(db.Model, UserMixin):
                             backref=db.backref('users', lazy='dynamic'))
     comment = db.Column(db.String(255))
 
-    def __init__(self):
-        pass
-
-    def __init__(self, login="none", password="", roles=[]):
+    def __init__(self, login="none", password="", roles=None):
+        if roles is None:
+            roles = []
         self.login = login
         self.display_name = login
         if password == "":
@@ -58,6 +56,7 @@ class User(db.Model, UserMixin):
 
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
+
 
 principals = Principal(app)
 admin_perm = Permission(RoleNeed("admin"))
@@ -103,17 +102,19 @@ class RoleAdmin(sqla.ModelView):
 admin.add_view(RoleAdmin(Role, db.session))
 
 
-def check_ldap_credentials(login, password):
+def check_ldap_credentials(username, password):
     try:
-        conn = ldap3.Connection(ldap3.Server(config.ldap_host, use_ssl=True), "cn=%s, cn=Users, dc=ad, dc=staszic, dc=waw, dc=pl" % login, password,
-                                auto_bind=True, raise_exceptions=False) #sprawdzic bezpieczenstwo polaczenia
-        ret = conn.search("cn=Users, dc=ad, dc=staszic, dc=waw, dc=pl", "(cn=%s)" % login, attributes=['uidNumber', 'displayName'])
+        conn = ldap3.Connection(ldap3.Server(config.ldap_host, use_ssl=True),
+                                "cn=%s, cn=Users, dc=ad, dc=staszic, dc=waw, dc=pl" % username, password,
+                                auto_bind=True, raise_exceptions=False)  # TODO: sprawdzić bezpieczeństwo połączenia
+        ret = conn.search("cn=Users, dc=ad, dc=staszic, dc=waw, dc=pl", "(cn=%s)" % username,
+                          attributes=['uidNumber', 'displayName'])
         if not ret:
             return False
         data = conn.entries
         if len(data) == 1:
             ldap_data = dict()
-            ldap_data['login'] = login
+            ldap_data['login'] = username
             ldap_data['uid'] = int(data[0]['uidNumber'][0])
             ldap_data['class_id'] = int(int(str(data[0]['uidNumber'][0])[0:3]))
             ldap_data['display_name'] = str(data[0]['displayName'][0])
@@ -127,18 +128,17 @@ def check_ldap_credentials(login, password):
     except ldap3.LDAPBindError, ldap3.LDAPSocketOpenError:
         return False
     except ldap3.LDAPException as e:
-        return False
-        print e
+        raise e
 
 
 def fill_database():
     admin_role = get_or_create(db.session, Role, name='admin')
     dj_role = get_or_create(db.session, Role, name='dj')
-    admin = get_or_create(db.session, User, login=config.admin_login)
-    admin.password = pwd_context.encrypt(config.admin_password)
-    admin.roles = [admin_role, dj_role]
-    admin.is_active = True
-    admin.commit = "admin z config.py, zawsze posiada hasło z config.py"
+    admin_user = get_or_create(db.session, User, login=config.admin_login)
+    admin_user.password = pwd_context.encrypt(config.admin_password)
+    admin_user.roles = [admin_role, dj_role]
+    admin_user.is_active = True
+    admin_user.commit = "admin z config.py, zawsze posiada hasło z config.py"
 
 
 @login_manager.user_loader
@@ -152,7 +152,11 @@ def login():
     wrong_login = False
 
     if form.validate_on_submit():
-        ldap_user = check_ldap_credentials(form.login.data, form.password.data)
+        try:
+            ldap_user = check_ldap_credentials(form.login.data, form.password.data)
+        except ldap3.LDAPException as e:
+            print e
+            ldap_user = False
         user = User.query.filter_by(login=form.login.data).first()
         if user is None and ldap_user:
             new_user = User(login=form.login.data)
@@ -161,7 +165,7 @@ def login():
             db.session.commit()
             user = new_user
         if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user or
-                                super_admin_can_check()):
+                                 super_admin_can_check()):
             if ldap_user:
                 if user.display_name != ldap_user['display_name']:
                     user.display_name = ldap_user['display_name']
@@ -179,9 +183,11 @@ def login():
 
     return render_template('login.html', form=form, wrong_login=wrong_login)
 
+
 @login_manager.needs_refresh_handler
 def refresh():
     return redirect(url_for('login', next=request.url))
+
 
 @app.errorhandler(403)
 def permission_denied_handler(e):
