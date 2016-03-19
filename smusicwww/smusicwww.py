@@ -6,10 +6,11 @@ import re
 from urllib import urlopen
 
 from shared import app, db
-from access_control import admin_perm, library_browse_perm, music_control_perm
+from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
 import access_control
 import config
 import radio_utils
+import upload
 
 
 __version__ = "0.1.1 Alpha"
@@ -31,7 +32,7 @@ app.secret_key = config.secret_key
 
 @app.context_processor
 def inject_is_admin():
-    return dict(is_admin=admin_perm.can())
+    return dict(is_admin=admin_perm.can(), can_upload=upload_perm.can())
 
 
 @app.before_first_request

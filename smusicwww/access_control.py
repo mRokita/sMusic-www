@@ -62,6 +62,7 @@ principals = Principal(app)
 admin_perm = Permission(RoleNeed("admin"))
 music_control_perm = Permission(RoleNeed("dj"))
 library_browse_perm = Permission(RoleNeed("ANY"))
+upload_perm = Permission(RoleNeed("dj"))
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)

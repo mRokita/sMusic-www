@@ -3,7 +3,7 @@ from urlparse import urlparse, urljoin
 from flask import request, url_for, redirect
 from flask_wtf import Form
 from wtforms import StringField, PasswordField, HiddenField, BooleanField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, URL
 
 
 def is_safe_url(target):
@@ -40,3 +40,7 @@ class LoginForm(RedirectForm):
     login = StringField(validators=[DataRequired()])
     password = PasswordField(validators=[DataRequired()])
     remember = BooleanField(default=True)
+
+
+class UploadForm(Form):
+    url = StringField('URL', validators=[DataRequired(), URL()])
