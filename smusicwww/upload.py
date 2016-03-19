@@ -6,6 +6,7 @@ from passlib.apps import custom_app_context as pwd_context
 from forms import UploadForm
 from shared import app
 from access_control import upload_perm
+import radio_utils
 
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -14,6 +15,16 @@ def ui_upload():
     form = UploadForm()
     message = ""
     if form.validate_on_submit():
-        pass
+        artist = None
+        if form.artist.data != "":
+            artist = form.artist.data
+        album = None
+        if form.album.data != "":
+            album = form.album.data
+        track = None
+        if form.track.data != "":
+            track = form.track.data
+        radio_utils.add_download(form.url.data, artist, album, track)
+        message = "Dodano link do pobrania"
 
     return render_template('upload.html', form=form, message=message)

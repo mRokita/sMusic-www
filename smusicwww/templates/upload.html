@@ -27,7 +27,7 @@ Dodaj Utwór
 {% block main %}
     <div class="row card-panel white" style="padding:0px;">
         <div class="col l5 m6 s12">
-            <form method="POST" action="/login" class="col s12">
+            <form method="POST" action="/upload" class="col s12">
                 {% if message!="" %}
                 <div class="card-panel yellow lighten-2"><h4>{{ message }}</h4></div>
                 {% endif %}
@@ -37,6 +37,27 @@ Dodaj Utwór
                         {{ form.url.label }}
                         {{ form.url(class="validate") }}
                         <ul class="errors">{% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        {{ form.artist.label }}
+                        {{ form.artist(class="validate") }}
+                        <ul class="errors">{% for error in form.artist.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        {{ form.album.label }}
+                        {{ form.album(class="validate") }}
+                        <ul class="errors">{% for error in form.album.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        {{ form.track.label }}
+                        {{ form.track(class="validate") }}
+                        <ul class="errors">{% for error in form.track.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                     </div>
                 </div>
                 <div class="row">

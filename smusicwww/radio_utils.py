@@ -5,6 +5,7 @@ from base64 import b64encode, b64decode
 
 import config
 from __init__ import __version__
+import logs
 
 
 def escape(msg):
@@ -80,7 +81,6 @@ def play_next():
     return send_for_result({"request": "play_next"})
 
 
-
 def play():
     return send_for_result({"request": "play"})
 
@@ -88,3 +88,13 @@ def play():
 def pause():
     return send_for_result({"request": "pause"})
 
+
+def add_download(uri, artist=None, album=None, track=None):
+    to_send = {"request": "add_download", "uri": uri}
+    if artist is not None:
+        to_send["artist"] = artist
+    if album is not None:
+        to_send["album"] = album
+    if track is not None:
+        to_send["track"] = track
+    return send_for_result(to_send)

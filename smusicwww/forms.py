@@ -44,3 +44,6 @@ class LoginForm(RedirectForm):
 
 class UploadForm(Form):
     url = StringField('URL', validators=[DataRequired(), URL()])
+    artist = StringField(u'Artysta')
+    album = StringField(u'Album')
+    track = StringField(u'Utwór')
