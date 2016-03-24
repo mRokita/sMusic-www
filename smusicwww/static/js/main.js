@@ -145,3 +145,20 @@ app.controller('playerStatus', function($scope, $http, $interval){
     $interval(function() {$scope.loadData();}, 1000);
 
 });
+
+app.controller('downloadStatus', function($scope, $http, $interval){
+    $scope.loadData = function() {
+        $http.get("/api/v1/current_download_queue/").success(function (response){
+            $scope.queue = response['queue'];
+        });
+    };
+
+    $scope.clearDownloadQueue = function(){
+        $http.get("/api/v1/clear_download_queue/").success(function(){
+            $scope.queue = [];
+        });
+    }
+
+    $interval(function() {$scope.loadData();}, 1000);
+    $scope.loadData();
+});

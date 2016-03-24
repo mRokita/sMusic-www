@@ -24,50 +24,61 @@
 {% block dropdown_title %}
 Dodaj Utwór
 {% endblock %}
+{% block controller %}downloadStatus{% endblock %}
 {% block main %}
-    <div class="row card-panel white" style="padding:0px;">
-        <div class="col l5 m6 s12">
-            <form method="POST" action="/upload" class="col s12">
-                {% if message!="" %}
-                <div class="card-panel yellow lighten-2"><h4>{{ message }}</h4></div>
-                {% endif %}
-                {{ form.hidden_tag() }}
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.url.label }}
-                        {{ form.url(class="validate") }}
-                        <ul class="errors">{% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-                    </div>
+    <div class="card-panel white col l5 m6 s12 row">
+        <form method="POST" action="/upload" class="col s12">
+            {% if message!="" %}
+            <div class="card-panel yellow lighten-2"><h5>{{ message }}</h5></div>
+            {% endif %}
+            {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="input-field col s12">
+                    {{ form.url.label }}
+                    {{ form.url(class="validate") }}
+                    <ul class="errors">{% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                 </div>
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.artist.label }}
-                        {{ form.artist(class="validate") }}
-                        <ul class="errors">{% for error in form.artist.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-                    </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    {{ form.artist.label }}
+                    {{ form.artist(class="validate") }}
+                    <ul class="errors">{% for error in form.artist.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                 </div>
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.album.label }}
-                        {{ form.album(class="validate") }}
-                        <ul class="errors">{% for error in form.album.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-                    </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    {{ form.album.label }}
+                    {{ form.album(class="validate") }}
+                    <ul class="errors">{% for error in form.album.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                 </div>
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.track.label }}
-                        {{ form.track(class="validate") }}
-                        <ul class="errors">{% for error in form.track.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-                    </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    {{ form.track.label }}
+                    {{ form.track(class="validate") }}
+                    <ul class="errors">{% for error in form.track.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                 </div>
-                <div class="row">
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light" type="submit" name="action">Submit
-                            <i class="material-icons right">send</i>
-                        </button>
-                    </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+                        <i class="material-icons right">send</i>
+                    </button>
                 </div>
-            </form>
+            </div>
+        </form>
+    </div>
+    <div class="col l5 m6 s12 row">
+        <div class="card-panel white">
+            <h5 style="margin-top:0">Kolejka</h5>
+            {% raw %}
+            <ul class="collection" >
+                <li class="collection-item" data-ng-repeat="item in queue"><span class="grey-text">{{ item.url }}</span>
+                    <span class="secondary-content">{{ item.track }}&nbsp;-&nbsp;{{ item.artist }}&nbsp;-&nbsp;{{ item.album }}</span></li>
+            </ul>
+            {% endraw %}
+            <button class="waves-effect waves-light btn" data-ng-click="clearDownloadQueue()">WYCZYŚĆ</button>
         </div>
     </div>
 {% endblock %}

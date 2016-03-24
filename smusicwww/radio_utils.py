@@ -89,8 +89,8 @@ def pause():
     return send_for_result({"request": "pause"})
 
 
-def add_download(uri, artist=None, album=None, track=None):
-    to_send = {"request": "add_download", "uri": uri}
+def add_download(method, url, artist=None, album=None, track=None):
+    to_send = {"request": "add_download", "url": method+";"+url}
     if artist is not None:
         to_send["artist"] = artist
     if album is not None:
@@ -98,3 +98,11 @@ def add_download(uri, artist=None, album=None, track=None):
     if track is not None:
         to_send["track"] = track
     return send_for_result(to_send)
+
+
+def get_current_dowanlod_queue():
+    return send_for_result({"request": "get_download_queue"})
+
+
+def clear_dowanlod_queue():
+    return send_for_result({"request": "clear_download_queue"})

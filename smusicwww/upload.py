@@ -7,6 +7,7 @@ from forms import UploadForm
 from shared import app
 from access_control import upload_perm
 import radio_utils
+import json
 
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -14,6 +15,7 @@ import radio_utils
 def ui_upload():
     form = UploadForm()
     message = ""
+    error = ""
     if form.validate_on_submit():
         artist = None
         if form.artist.data != "":
@@ -24,7 +26,19 @@ def ui_upload():
         track = None
         if form.track.data != "":
             track = form.track.data
-        radio_utils.add_download(form.url.data, artist, album, track)
-        message = "Dodano link do pobrania"
+        radio_utils.add_download("youtube-dl", form.url.data, artist, album, track)
+        message = "Dodano link do kolejki pobierania"
 
-    return render_template('upload.html', form=form, message=message)
+    return render_template('upload.html', form=form, message=message, error=error)
+
+
+@app.route('/api/v1/current_download_queue/')
+@upload_perm.require(http_exception=403)
+def api_current_download_queue():
+    return json.dumps(radio_utils.get_current_dowanlod_queue())
+
+
+@app.route('/api/v1/clear_download_queue/')
+@upload_perm.require(http_exception=403)
+def api_clear_download_queue():
+    return json.dumps(radio_utils.clear_download_queue())
