@@ -73,6 +73,12 @@ Dodaj Utwór
         <div class="card-panel white">
             <h5 style="margin-top:0">Kolejka</h5>
             {% raw %}
+            <div data-ng-if="is_downloading">
+                <div class="progress">
+                    <div class="determinate" ng-style="{'width': progress+'%' }" data-ng-if="progress_known"></div>
+                    <div class="indeterminate" data-ng-if="!progress_known"></div>
+                </div>
+            </div>
             <ul class="collection" >
                 <li class="collection-item" data-ng-repeat="item in queue"><span class="grey-text">{{ item.url }}</span>
                     <span class="secondary-content">{{ item.track }}&nbsp;-&nbsp;{{ item.artist }}&nbsp;-&nbsp;{{ item.album }}</span></li>

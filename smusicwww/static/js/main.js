@@ -147,11 +147,31 @@ app.controller('playerStatus', function($scope, $http, $interval){
 });
 
 app.controller('downloadStatus', function($scope, $http, $interval){
-    $scope.loadData = function() {
+    $scope.loadStatus = function() {
+        $http.get("/api/v1/download_status/").success(function (response){
+            if(response['status'] == "downloading")
+            {
+                $scope.progress = response['progress'] * 100;
+                $scope.speed = response['speed'];
+                $scope.eta = response['eta'] + "s.";
+                $scope.is_downloading = 1;
+                if (response['progress'] < 0.98 && response['eta'] > 10)
+                    $scope.progress_known = true;
+                else
+                    $scope.progress_known = false;
+            }
+            else
+            {
+                $scope.is_downloading = 0;
+            }
+        });
+    };
+
+    $scope.loadQueue = function() {
         $http.get("/api/v1/current_download_queue/").success(function (response){
             $scope.queue = response['queue'];
         });
-    };
+    }
 
     $scope.clearDownloadQueue = function(){
         $http.get("/api/v1/clear_download_queue/").success(function(){
@@ -159,6 +179,8 @@ app.controller('downloadStatus', function($scope, $http, $interval){
         });
     }
 
-    $interval(function() {$scope.loadData();}, 1000);
-    $scope.loadData();
+    $interval(function() {$scope.loadStatus();}, 500);
+    $interval(function() {$scope.loadQueue();}, 3000);
+    $scope.loadStatus();
+    $scope.loadQueue();
 });

@@ -104,5 +104,9 @@ def get_current_dowanlod_queue():
     return send_for_result({"request": "get_download_queue"})
 
 
-def clear_dowanlod_queue():
+def clear_download_queue():
     return send_for_result({"request": "clear_download_queue"})
+
+
+def download_status():
+    return send_for_result({"request": "download_status"})

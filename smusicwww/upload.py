@@ -42,3 +42,9 @@ def api_current_download_queue():
 @upload_perm.require(http_exception=403)
 def api_clear_download_queue():
     return json.dumps(radio_utils.clear_download_queue())
+
+
+@app.route('/api/v1/download_status/')
+@upload_perm.require(http_exception=403)
+def api_download_status():
+    return json.dumps(radio_utils.download_status())
