@@ -10,7 +10,7 @@ import radio_utils
 import json
 
 
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route('/upload/', methods=['GET', 'POST'])
 @upload_perm.require(http_exception=403)
 def ui_upload():
     form = UploadForm()
