@@ -16,7 +16,7 @@ Dodaj Utwór
 {% block controller %}downloadStatus{% endblock %}
 {% block main %}
     <div class="card-panel white col l5 m6 s12 row">
-        <form method="POST" action="/upload" class="col s12">
+        <form method="POST" action="/upload/" class="col s12">
             {% if message!="" %}
             <div class="card-panel yellow lighten-2"><h5>{{ message }}</h5></div>
             {% endif %}
