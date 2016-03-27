@@ -42,6 +42,7 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
     comment = db.Column(db.String(255))
+    vote_pints = db.relationship("VotePoint")
 
     def __init__(self, login="none", password="", roles=None):
         if roles is None:
@@ -62,6 +63,8 @@ principals = Principal(app)
 admin_perm = Permission(RoleNeed("admin"))
 music_control_perm = Permission(RoleNeed("dj"))
 library_browse_perm = Permission(RoleNeed("ANY"))
+vote_perm = Permission(RoleNeed("ANY"))
+control_controllers_perm = Permission(RoleNeed("admin"))
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)

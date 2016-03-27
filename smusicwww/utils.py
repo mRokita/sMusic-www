@@ -1,6 +1,13 @@
 #-*- coding: utf-8 -*-
 import random
 import string
+from shared import db
+
+
+class Singleton(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), unique=True)
+    value = db.Column(db.String(2048))
 
 
 def get_or_create(session, model, **kwargs):
