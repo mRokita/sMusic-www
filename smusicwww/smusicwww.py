@@ -1,5 +1,4 @@
 #-*- coding: utf-8 -*-
-from __future__ import print_function
 from flask import request, render_template, redirect
 import json
 import re
@@ -10,9 +9,8 @@ from access_control import admin_perm, library_browse_perm, music_control_perm
 import access_control
 import config
 import radio_utils
+from __init__ import __version__
 
-
-__version__ = "0.1.1 Alpha"
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
 PATTERN_FIX_ALBUM = re.compile("( ?\\(.*?\\))|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)|(\\&)|(\\,)|( UK)|( US)")
@@ -27,7 +25,6 @@ CHAR_FIX = {u"ó": u"o",
 
 app.config['SQLALCHEMY_DATABASE_URI'] = config.database_uri
 app.secret_key = config.secret_key
-
 
 @app.context_processor
 def inject_is_admin():

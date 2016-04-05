@@ -30,6 +30,7 @@ lib64/
 parts/
 sdist/
 var/
+server.ini
 *.egg-info/
 .installed.cfg
 *.egg
