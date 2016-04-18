@@ -11,9 +11,8 @@ import access_control
 import config
 import radio_utils
 import upload
+from __init__ import __version__
 
-
-__version__ = "0.1.1 Alpha"
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
 PATTERN_FIX_ALBUM = re.compile("( ?\\(.*?\\))|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)|(\\&)|(\\,)|( UK)|( US)")
