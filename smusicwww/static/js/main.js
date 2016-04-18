@@ -54,7 +54,7 @@ app.controller('librarySearch', function($scope, $http){
     $scope.search = function(){
         $http.get("/api/v1/search_track/"+encodeURI($scope.query)).success(function(response){
             $scope.tracks = response["tracks"];
-            console.log(response);
+            $scope.query_current = $scope.query;
         });
     };
 
