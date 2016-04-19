@@ -9,10 +9,7 @@ from access_control import admin_perm, library_browse_perm, music_control_perm, 
 import access_control
 import config
 import radio_utils
-<<<<<<< HEAD
-=======
 import upload
->>>>>>> download
 from __init__ import __version__
 
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
