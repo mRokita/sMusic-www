@@ -1,8 +1,8 @@
 #-*- coding: utf-8 -*-
-from flask import request, render_template, redirect
+from flask import request, render_template, redirect, abort
 import json
 import re
-from urllib import urlopen
+from urllib import urlopen, quote
 
 from shared import app, db
 from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
@@ -11,18 +11,6 @@ import config
 import radio_utils
 import upload
 from __init__ import __version__
-
-ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
-PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
-PATTERN_FIX_ALBUM = re.compile("( ?\\(.*?\\))|(\\ ?[Dd][Ii][Ss][Cc] \d)|(\\ ?[Cc][Dd] \d)|(\\&)|(\\,)|( UK)|( US)")
-CHAR_FIX = {u"ó": u"o",
-            u"ź": u"z",
-            u"ł": u"l",
-            u"ą": u"a",
-            u"ś": u"s",
-            u"ć": u"c",
-            u"ę": u"e",
-            u"ń": u"n"}
 
 app.config['SQLALCHEMY_DATABASE_URI'] = config.database_uri
 app.secret_key = config.secret_key
@@ -161,9 +149,14 @@ def api_v1_search_track(query):
 
 @app.route('/api/v1/albumart/<artist>/<album>/')
 def api_v1_album_art(artist, album):
-    url = ALBUM_ART_URL.format(unicode(fix_chars(artist).encode("utf-8")),
-                               PATTERN_FIX_ALBUM.sub("", unicode(fix_chars(album).encode("utf-8"))))
-    return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
+    try:
+        images = json.loads(
+            urlopen("https://api.spotify.com/v1/search?q={}&type=album".format(
+                quote('{} {}'.format(artist, album)))).read()
+        )["albums"]["items"][0]["images"]
+        return redirect(images[0]["url"], 302)
+    except IndexError, KeyError:
+        return json.dumps({"error": 404}), 404
 
 
 @app.route('/api/v1/play/')
