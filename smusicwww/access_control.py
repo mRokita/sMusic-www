@@ -17,6 +17,7 @@ from shared import app, db
 from utils import get_or_create, secure_random_string_generator
 import config
 import base64
+import hashlib
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -55,7 +56,7 @@ class User(db.Model, UserMixin):
         self.password = pwd_context.encrypt(password)
         self.is_active = True
         self.roles = roles
-        self.api_key = secure_random_string_generator(32)
+        self.api_key = ""
 
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
@@ -88,7 +89,7 @@ admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
 
 
 class UserAdmin(sqla.ModelView):
-    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment']
+    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment', 'api_key']
     column_exclude_list = ['password']
     column_display_pk = False
     column_searchable_list = ('login', 'display_name')
@@ -150,11 +151,22 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+def get_hash_for_api_key(api_key):
+    return hashlib.sha256(api_key).hexdigest()
+
+
+def get_user_by_api_key(api_key):
+    if len(api_key) == 32:
+        api_key_hash = get_hash_for_api_key(api_key)
+        print api_key_hash
+        return User.query.filter_by(api_key=api_key_hash).first()
+
+
 @login_manager.request_loader
 def load_user_from_request(req):
     api_key = req.args.get('api_key')
     if api_key:
-        user = User.query.filter_by(api_key=api_key).first()
+        user = get_user_by_api_key(api_key)
         if user:
             return user
 
@@ -165,7 +177,7 @@ def load_user_from_request(req):
             api_key = base64.b64decode(api_key)
         except TypeError:
             pass
-        user = User.query.filter_by(api_key=api_key).first()
+        user = get_user_by_api_key(api_key)
         if user:
             return user
 
