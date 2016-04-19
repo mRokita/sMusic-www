@@ -16,6 +16,7 @@ from forms import LoginForm
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
 import config
+import base64
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -42,6 +43,7 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
     comment = db.Column(db.String(255))
+    api_key = db.Column(db.String(255))
 
     def __init__(self, login="none", password="", roles=None):
         if roles is None:
@@ -53,6 +55,7 @@ class User(db.Model, UserMixin):
         self.password = pwd_context.encrypt(password)
         self.is_active = True
         self.roles = roles
+        self.api_key = secure_random_string_generator(32)
 
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
@@ -145,6 +148,28 @@ def fill_database():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@login_manager.request_loader
+def load_user_from_request(req):
+    api_key = req.args.get('api_key')
+    if api_key:
+        user = User.query.filter_by(api_key=api_key).first()
+        if user:
+            return user
+
+    api_key = req.headers.get('Authorization')
+    if api_key:
+        api_key = api_key.replace('Basic ', '', 1)
+        try:
+            api_key = base64.b64decode(api_key)
+        except TypeError:
+            pass
+        user = User.query.filter_by(api_key=api_key).first()
+        if user:
+            return user
+
+    return None
 
 
 @app.route('/login', methods=['GET', 'POST'])
