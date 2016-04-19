@@ -54,7 +54,7 @@ app.controller('librarySearch', function($scope, $http){
     $scope.search = function(){
         $http.get("/api/v1/search_track/"+encodeURI($scope.query)).success(function(response){
             $scope.tracks = response["tracks"];
-            console.log(response);
+            $scope.query_current = $scope.query;
         });
     };
 
@@ -144,4 +144,42 @@ app.controller('playerStatus', function($scope, $http, $interval){
 
     $interval(function() {$scope.loadData();}, 1000);
 
+});
+
+app.controller('downloadStatus', function($scope, $http, $interval){
+    $scope.loadStatus = function() {
+        $http.get("/api/v1/download_status/").success(function (response){
+            if(response['status'] == "downloading") {
+                $scope.progress = response['progress'] * 100;
+                $scope.speed = response['speed'];
+                $scope.eta = response['eta'] + "s.";
+                $scope.is_downloading = 1;
+                $scope.progress_known = (response['progress'] < 0.98 && response['eta'] > 10);
+            } else {
+                $scope.is_downloading = 0;
+            }
+        });
+    };
+
+    $scope.titleFromYtUrl = function(url){
+        splittedUrl = url.split("/");
+        return splittedUrl[splittedUrl.length-1]
+    };
+
+    $scope.loadQueue = function() {
+        $http.get("/api/v1/current_download_queue/").success(function (response){
+            $scope.queue = response['queue'];
+        });
+    };
+
+    $scope.clearDownloadQueue = function(){
+        $http.get("/api/v1/clear_download_queue/").success(function(){
+            $scope.queue = [];
+        });
+    };
+
+    $interval(function() {$scope.loadStatus();}, 500);
+    $interval(function() {$scope.loadQueue();}, 3000);
+    $scope.loadStatus();
+    $scope.loadQueue();
 });

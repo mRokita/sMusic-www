@@ -5,10 +5,14 @@ import re
 from urllib import urlopen
 
 from shared import app, db
-from access_control import admin_perm, library_browse_perm, music_control_perm
+from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
 import access_control
 import config
 import radio_utils
+<<<<<<< HEAD
+=======
+import upload
+>>>>>>> download
 from __init__ import __version__
 
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
@@ -28,7 +32,11 @@ app.secret_key = config.secret_key
 
 @app.context_processor
 def inject_is_admin():
-    return dict(is_admin=admin_perm.can())
+    navigation_bar = [('/', 'index', u'Odtwarzacz'),
+                      ('/library/', 'library', u'Biblioteka')]
+    if upload_perm.can():
+        navigation_bar.append(('/upload/', 'upload', u'Dodawanie utworów'))
+    return dict(is_admin=admin_perm.can(), can_upload=upload_perm.can(), navigation_bar=navigation_bar)
 
 
 @app.before_first_request

@@ -3,7 +3,9 @@
 {% block breadcrumb %}
     <a href="/library/" class="breadcrumb">Biblioteka</a>
     <a href="/search/" class="breadcrumb">Szukaj</a>
-    <a href="/search/?q={{ query }}" class="breadcrumb">{{ query }}</a>
+    {% raw %}
+    <a href="/search/?q={{ query_current }}" class="breadcrumb">{{ query_current }}</a>
+    {% endraw %}
 {% endblock %}
 {{ query }}
 {% block collection %}

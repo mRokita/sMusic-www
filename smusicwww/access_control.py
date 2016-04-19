@@ -62,6 +62,7 @@ principals = Principal(app)
 admin_perm = Permission(RoleNeed("admin"))
 music_control_perm = Permission(RoleNeed("dj"))
 library_browse_perm = Permission(RoleNeed("ANY"))
+upload_perm = Permission(RoleNeed("dj"))
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)
@@ -227,7 +228,9 @@ def on_identity_loaded(sender, identity):
     if hasattr(current_user, 'roles'):
         for role in current_user.roles:
             identity.provides.add(RoleNeed(role.name))
-    identity.provides.add(RoleNeed("ANY"))
+
+    if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+        identity.provides.add(RoleNeed("ANY"))
 
     if hasattr(current_user, 'login') and current_user.login in config.super_admin:
         identity.provides.add(RoleNeed('super_admin'))
