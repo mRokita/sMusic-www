@@ -23,6 +23,7 @@ Biblioteka muzyczna
           </div>
         </div>
         </nav>
+        {% block content %}
         <div class="col l12 m12 s12">
             {% block collection %}
             <div class="collection" >
@@ -30,6 +31,7 @@ Biblioteka muzyczna
             </div>
             {% endblock %}
         </div>
+        {% endblock %}
     </div>
 {% endblock %}
 {% block script %}

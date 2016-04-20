@@ -40,10 +40,12 @@ app.controller('libraryArtistAlbumTracks', function($scope, $http){
     $scope.loadData = function(){
         $scope.artist = artist;
         $scope.album = album;
+        $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
         $http.get("/api/v1/library/"+$scope.artist+"/"+$scope.album+"/").success(function(response){
             $scope.tracks = response["tracks"];
             $scope.artist_name = response["artist_name"];
             $scope.album_name = response["album_name"];
+            $scope.albumArtURL = "/api/v1/albumart/" + encodeURI($scope.artist_name)+"/"+encodeURI($scope.album_name)+"/"
         });
     };
 
