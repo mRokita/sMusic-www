@@ -51,7 +51,7 @@ app.controller('libraryArtistAlbumTracks', function($scope, $http){
     $scope.loadData = function(){
         $scope.artist = artist;
         $scope.album = album;
-        $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
+        $scope.albumArtURL = "/static/images/nocover.jpg";
         $http.get("/api/v1/library/"+$scope.artist+"/"+$scope.album+"/").success(function(response){
             $scope.tracks = response["tracks"];
             $scope.artist_name = response["artist_name"];
@@ -109,7 +109,7 @@ app.controller('librarySearch', function($scope, $http){
 
 app.controller('playerStatus', function($scope, $http, $interval){
     $scope.isFileLoaded = false;
-    $scope.albumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
+    $scope.albumArtURL = "/static/images/nocover.jpg";
     $scope.loadData = function(status) {
         var loadFromStatus = function (response) {
             if (typeof response === "undefined") return;
@@ -134,7 +134,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
                 $scope.trackTitle = "Error: No track is loaded";
                 $scope.trackArtist = "Error: No track is loaded";
                 $scope.trackAlbum = "Error: No track is loaded";
-                newAlbumArtURL = "http://drlynnjohnson.com/wp-content/uploads/2014/03/cd-dvd.jpg";
+                newAlbumArtURL = "/static/images/nocover.jpg";
                 if ($scope.albumArtURL != newAlbumArtURL)
                     $scope.albumArtURL = newAlbumArtURL;
                 $scope.position = 0;
