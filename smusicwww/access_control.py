@@ -143,23 +143,12 @@ def fill_database():
     admin_user.password = pwd_context.encrypt(config.admin_password)
     admin_user.roles = [admin_role, dj_role]
     admin_user.is_active = True
-    admin_user.commit = "admin z config.py, zawsze posiada hasło z config.py"
+    admin_user.comment = "admin z config.py, zawsze posiada hasło z config.py"
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-
-def get_hash_for_api_key(api_key):
-    return hashlib.sha256(api_key).hexdigest()
-
-
-def get_user_by_api_key(api_key):
-    if len(api_key) == 32:
-        api_key_hash = get_hash_for_api_key(api_key)
-        print api_key_hash
-        return User.query.filter_by(api_key=api_key_hash).first()
 
 
 @login_manager.request_loader
@@ -220,6 +209,28 @@ def login():
             form.login.data = current_user.login
 
     return render_template('login.html', form=form, wrong_login=wrong_login)
+
+
+def get_hash_for_api_key(api_key):
+    return hashlib.sha256(api_key).hexdigest()
+
+
+def get_user_by_api_key(api_key):
+    if len(api_key) == 32:
+        api_key_hash = get_hash_for_api_key(api_key)
+        print api_key_hash
+        return User.query.filter_by(api_key=api_key_hash).first()
+
+
+@app.route('/get_api_key', methods=['GET', 'POST'])
+@fresh_login_required
+def get_api_key():
+    new_api_key = secure_random_string_generator(32)
+    new_api_key_hash = get_hash_for_api_key(new_api_key)
+    current_user.api_key = new_api_key_hash.encode("utf8")
+    db.session.add(current_user)
+    db.session.commit()
+    return render_template('api_key.html', api_key=new_api_key)
 
 
 @login_manager.needs_refresh_handler

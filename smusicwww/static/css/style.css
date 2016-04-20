@@ -8,3 +8,10 @@ body {
   	top: 0;
   	left: 0;
 }
+
+.code {
+	font-family: monospace;s
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+}
