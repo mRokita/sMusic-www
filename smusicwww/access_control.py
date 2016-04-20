@@ -227,7 +227,6 @@ def get_hash_for_api_key(api_key):
 def get_user_by_api_key(api_key):
     if len(api_key) == 32:
         api_key_hash = get_hash_for_api_key(api_key)
-        print api_key_hash
         return User.query.filter_by(api_key=api_key_hash).first()
 
 
