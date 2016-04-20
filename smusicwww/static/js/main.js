@@ -2,6 +2,19 @@ function str_pad_left(string) {
     return ("0"+string).slice(-2);
 }
 
+function findTrackWithId(track_id, tracks){
+    var track;
+    for(var id in tracks){
+        if(tracks.hasOwnProperty(id)){
+            if(tracks[id]["id"] === track_id){
+                track = tracks[id];
+                break;
+            }
+        }
+    }
+    return track
+}
+
 var app = angular.module('sMusic', []);
 app.controller('libraryMainView', function($scope, $http){
     $scope.loadData = function(){
@@ -35,11 +48,17 @@ app.controller('libraryArtistAlbumTracks', function($scope, $http){
     };
 
     $scope.clearQueueAndPlayTrack = function(track_id){
-        $http.get("/api/v1/clear_q_and_play/"+$scope.artist+"/"+$scope.album+"/"+track_id+"/");
+        $http.get("/api/v1/clear_q_and_play/"+$scope.artist+"/"+$scope.album+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.tracks);
+            Materialize.toast('Odtwarzanie ' + track["title"], 3000);
+        })
     };
 
     $scope.addToQueue = function(track_id){
-        $http.get("/api/v1/add_to_q/"+$scope.artist+"/"+$scope.album+"/"+track_id+"/");
+        $http.get("/api/v1/add_to_q/"+$scope.artist+"/"+$scope.album+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.tracks);
+            Materialize.toast('Dodano '+track["title"]+' do kolejki', 3000);
+        });
     };
 
     $scope.loadData();
@@ -60,12 +79,17 @@ app.controller('librarySearch', function($scope, $http){
 
     $scope.tracks = {};
     $scope.clearQueueAndPlayTrack = function(artist_id, album_id, track_id){
-        console.log(artist_id+album_id+track_id);
-        $http.get("/api/v1/clear_q_and_play/"+artist_id+"/"+album_id+"/"+track_id+"/");
+        $http.get("/api/v1/clear_q_and_play/"+artist_id+"/"+album_id+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.tracks);
+            Materialize.toast('Odtwarzanie ' + track["title"], 3000);
+        });
     };
 
     $scope.addToQueue = function(artist_id, album_id, track_id){
-        $http.get("/api/v1/add_to_q/"+artist_id+"/"+album_id+"/"+track_id+"/");
+        $http.get("/api/v1/add_to_q/"+artist_id+"/"+album_id+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.tracks);
+            Materialize.toast('Dodano ' + track["title"] + ' do kolejki', 3000);
+        })
     };
     $scope.search();
 });
