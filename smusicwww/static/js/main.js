@@ -2,6 +2,17 @@ function str_pad_left(string) {
     return ("0"+string).slice(-2);
 }
 
+function idFromTag(tag){
+    tag = tag.toLowerCase();
+    var ret = "";
+    for(var a in tag){
+        if("abcdefghijklmnopqrstuvwxyz1234567890".indexOf(tag[a]) != -1){
+            ret += tag[a];
+        }
+    }
+    return ret;
+}
+
 function findTrackWithId(track_id, tracks){
     var track;
     for(var id in tracks){
@@ -141,6 +152,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
         });
     };
 
+    $scope.idFromTag = idFromTag;
     $scope.clearQueue = function () {
         $http.get("/api/v1/clear_queue/").success(function(){
             $scope.queue = [];

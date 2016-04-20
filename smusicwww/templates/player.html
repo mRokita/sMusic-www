@@ -26,15 +26,15 @@ Panel główny
                 <div class="card-content">
                   <span class="card-title activator grey-text text-darken-4">{{ trackTitle }}</span>
                 </div>
-                <div class="card-reveal">
+                <div data-ng-if="isFileLoaded" class="card-reveal">
                     <span class="card-title grey-text text-darken-4" id="status_title">{{ trackTitle }}</span>
                     <br />
                     <label for="title">Tytuł</label>
                     <div id="title">{{ trackTitle }}</div>
                     <label for="album">Album</label>
-                    <div id="album">{{ trackAlbum }}</div>
+                    <div><a href="/library/{{ idFromTag(trackArtist) }}/{{ idFromTag(trackAlbum) }}/" id="album">{{ trackAlbum }}</a></div>
                     <label for="artist">Wykonawca</label>
-                    <div id="artist">{{ trackArtist }}</div>
+                    <div><a href="/library/{{ idFromTag(trackArtist) }}/" id="artist">{{ trackArtist }}</a></div>
                 </div>
             </div>
         </div>
