@@ -18,6 +18,7 @@ from utils import get_or_create, secure_random_string_generator
 import config
 import base64
 import hashlib
+import json
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -143,7 +144,7 @@ def fill_database():
     admin_user.password = pwd_context.encrypt(config.admin_password)
     admin_user.roles = [admin_role, dj_role]
     admin_user.is_active = True
-    admin_user.comment = "admin z config.py, zawsze posiada hasło z config.py"
+    admin_user.comment = "admin z config.py, zawsze posiada haslo z config.py"
 
 
 @login_manager.user_loader
@@ -173,30 +174,38 @@ def load_user_from_request(req):
     return None
 
 
+def check_login(user, password):
+    try:
+        ldap_user = check_ldap_credentials(user, password)
+    except ldap3.LDAPException as e:
+        print e
+        ldap_user = False
+    user = User.query.filter_by(login=user).first()
+    if user is None and ldap_user:
+        new_user = User(login=user)
+        new_user.comment = "Auto import from LDAP %s" % config.ldap_host
+        db.session.add(new_user)
+        db.session.commit()
+        user = new_user
+    if user is not None and (pwd_context.verify(password, user.password) or ldap_user or
+                             super_admin_can_check()):
+        if ldap_user:
+            if user.display_name != ldap_user['display_name']:
+                user.display_name = ldap_user['display_name']
+                db.session.commit()
+        return user
+    else:
+        return None
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     wrong_login = False
 
     if form.validate_on_submit():
-        try:
-            ldap_user = check_ldap_credentials(form.login.data, form.password.data)
-        except ldap3.LDAPException as e:
-            print e
-            ldap_user = False
-        user = User.query.filter_by(login=form.login.data).first()
-        if user is None and ldap_user:
-            new_user = User(login=form.login.data)
-            new_user.comment = "Auto import from LDAP %s" % config.ldap_host
-            db.session.add(new_user)
-            db.session.commit()
-            user = new_user
-        if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user or
-                                 super_admin_can_check()):
-            if ldap_user:
-                if user.display_name != ldap_user['display_name']:
-                    user.display_name = ldap_user['display_name']
-                    db.session.commit()
+        user = check_login(form.login.data, form.password.data)
+        if user:
             login_user(user, remember=form.remember)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
@@ -222,15 +231,38 @@ def get_user_by_api_key(api_key):
         return User.query.filter_by(api_key=api_key_hash).first()
 
 
+def generate_new_api_key(user):
+    new_api_key = secure_random_string_generator(32)
+    new_api_key_hash = get_hash_for_api_key(new_api_key)
+    user.api_key = new_api_key_hash.encode("utf8")
+    db.session.add(user)
+    db.session.commit()
+    return new_api_key
+
+
 @app.route('/get_api_key', methods=['GET', 'POST'])
 @fresh_login_required
 def get_api_key():
-    new_api_key = secure_random_string_generator(32)
-    new_api_key_hash = get_hash_for_api_key(new_api_key)
-    current_user.api_key = new_api_key_hash.encode("utf8")
-    db.session.add(current_user)
-    db.session.commit()
+    new_api_key = generate_new_api_key(current_user)
     return render_template('api_key.html', api_key=new_api_key)
+
+
+@app.route('/api/v1/get_api_key', methods=['GET', 'POST'])
+def api_get_api_key():
+    if request.method == 'POST' and 'login' in request.form and 'password' in request.form:
+        user = request.form['login']
+        password = request.form['pass']
+    else:
+        user = request.args.get('user')
+        password = request.args.get('pass')
+        if not (user and password):
+            return json.dumps({"type": "error", "subtype": "wrong_request", "message": "Missing parameter"})
+    user_obj = check_login(user, password)
+    if user_obj is not None:
+        new_api_key = generate_new_api_key(user_obj)
+        return json.dumps({"type": "ok", "api_key": new_api_key})
+    else:
+        return json.dumps({"type": "error", "subtype": "wrong_login", "message": "Wrong login"})
 
 
 @login_manager.needs_refresh_handler
