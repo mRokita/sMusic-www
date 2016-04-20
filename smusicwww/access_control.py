@@ -5,7 +5,7 @@ import flask
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin, \
     fresh_login_required, login_fresh
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed, \
-    UserNeed, Permission
+    UserNeed, Permission, TypeNeed
 from flask_admin import Admin, AdminIndexView
 import flask_admin
 from flask_admin.contrib import sqla
@@ -19,6 +19,9 @@ import config
 import base64
 import hashlib
 import json
+
+NORMAL_LOGIN = 0
+API_LOGIN = 1
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -46,6 +49,7 @@ class User(db.Model, UserMixin):
                             backref=db.backref('users', lazy='dynamic'))
     comment = db.Column(db.String(255))
     api_key = db.Column(db.String(255))
+    login_type = NORMAL_LOGIN
 
     def __init__(self, login="none", password="", roles=None):
         if roles is None:
@@ -62,6 +66,7 @@ class User(db.Model, UserMixin):
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
 
+api_allowed_roles = ["ANY", "dj"]
 
 principals = Principal(app)
 admin_perm = Permission(RoleNeed("admin"))
@@ -158,6 +163,9 @@ def load_user_from_request(req):
     if api_key:
         user = get_user_by_api_key(api_key)
         if user:
+            identity_changed.send(current_app._get_current_object(),
+                                  identity=Identity(user.id))
+            user.login_type = API_LOGIN
             return user
 
     api_key = req.headers.get('Authorization')
@@ -169,6 +177,9 @@ def load_user_from_request(req):
             pass
         user = get_user_by_api_key(api_key)
         if user:
+            identity_changed.send(current_app._get_current_object(),
+                                  identity=Identity(user.id))
+            user.login_type = API_LOGIN
             return user
 
     return None
@@ -206,6 +217,7 @@ def login():
     if form.validate_on_submit():
         user = check_login(form.login.data, form.password.data)
         if user:
+            user.login_type = NORMAL_LOGIN
             login_user(user, remember=form.remember)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
@@ -296,29 +308,39 @@ def load_identity_when_session_expires():  # restores the identity when restorin
         return Identity(current_user.id)
 
 
+@principals.identity_saver
+def identity_saver(identity):
+    pass  # this shouldn't do anything
+
+
 @identity_loaded.connect_via(app)
 def on_identity_loaded(sender, identity):
     # Set the identity user object
     identity.user = current_user
+    is_normal_login = hasattr(current_user, 'login_type') and current_user.login_type == NORMAL_LOGIN
+    if is_normal_login:
+        identity.provides.add(TypeNeed("normal_login"))
 
     if hasattr(current_user, 'id'):
         identity.provides.add(UserNeed(current_user.id))
 
     if hasattr(current_user, 'roles'):
         for role in current_user.roles:
-            identity.provides.add(RoleNeed(role.name))
+            if role.name in api_allowed_roles or is_normal_login:
+                identity.provides.add(RoleNeed(role.name))
 
     if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
         identity.provides.add(RoleNeed("ANY"))
 
-    if hasattr(current_user, 'login') and current_user.login in config.super_admin:
+    if hasattr(current_user, 'login') and current_user.login in config.super_admin and is_normal_login:
         identity.provides.add(RoleNeed('super_admin'))
         for role in Role.query.all():
             identity.provides.add(RoleNeed(role.name))
 
 
 def super_admin_can_check():
-    if hasattr(current_user, 'login') and current_user.login in config.super_admin:
+    if hasattr(current_user, 'login') and (current_user.login in config.super_admin) \
+       and Permission(TypeNeed("normal_login")).can():
         if login_fresh():
             return True
         else:
