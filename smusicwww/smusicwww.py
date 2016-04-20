@@ -30,9 +30,9 @@ app.secret_key = config.secret_key
 @app.context_processor
 def inject_is_admin():
     navigation_bar = [('/', 'index', u'Odtwarzacz'),
-                      ('/library/', 'library', u'Biblioteka')]
-    if upload_perm.can():
-        navigation_bar.append(('/upload/', 'upload', u'Dodawanie utworów'))
+                      ('/library/', 'library', u'Biblioteka'),
+                      ('/upload/', 'upload', u'Dodawanie utworów'),
+                      ('/admin/', 'admin', u'Administracja')]
     return dict(is_admin=admin_perm.can(), can_upload=upload_perm.can(), navigation_bar=navigation_bar)
 
 
