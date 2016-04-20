@@ -156,7 +156,7 @@ def api_v1_album_art(artist, album):
         )["albums"]["items"][0]["images"]
         return redirect(images[0]["url"], 302)
     except IndexError, KeyError:
-        return json.dumps({"error": 404}), 404
+        return json.dumps({"type": "error", "subtype": "not_found", "message": "album art nie zostal znaleziony"}), 404
 
 
 @app.route('/api/v1/play/')
