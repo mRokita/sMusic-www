@@ -1,5 +1,5 @@
 #-*- coding: utf-8 -*-
-from flask import request, render_template, redirect
+from flask import request, render_template, redirect, Response, stream_with_context
 import json
 import re
 from urllib import urlopen
@@ -164,7 +164,7 @@ def api_v1_search_track(query):
 def api_v1_album_art(artist, album):
     url = ALBUM_ART_URL.format(unicode(fix_chars(artist).encode("utf-8")),
                                PATTERN_FIX_ALBUM.sub("", unicode(fix_chars(album).encode("utf-8"))))
-    return redirect(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0], 302)
+    return Response(stream_with_context(urlopen(PATTERN_ALBUM_ART.findall(urlopen(url).read())[0])))
 
 
 @app.route('/api/v1/play/')
