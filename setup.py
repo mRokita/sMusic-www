@@ -23,6 +23,7 @@ setup(name="sMusicServer",
                         "static/materialize/font/roboto/*",
                         "static/materialize/js/*",
                         "static/materialize/*",
+                        "static/images/*",
                         ]
       },
       scripts=["sMusicServer"],
