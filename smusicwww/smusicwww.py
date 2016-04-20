@@ -27,6 +27,7 @@ CHAR_FIX = {u"ó": u"o",
 app.config['SQLALCHEMY_DATABASE_URI'] = config.database_uri
 app.secret_key = config.secret_key
 
+
 @app.context_processor
 def inject_is_admin():
     navigation_bar = [('/', 'index', u'Odtwarzacz'),

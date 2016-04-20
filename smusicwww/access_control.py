@@ -5,7 +5,7 @@ import flask
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin, \
     fresh_login_required, login_fresh
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, identity_loaded, RoleNeed, \
-    UserNeed, Permission
+    UserNeed, Permission, TypeNeed
 from flask_admin import Admin, AdminIndexView
 import flask_admin
 from flask_admin.contrib import sqla
@@ -16,6 +16,12 @@ from forms import LoginForm
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
 import config
+import base64
+import hashlib
+import json
+
+NORMAL_LOGIN = 0
+API_LOGIN = 1
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -42,6 +48,8 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
     comment = db.Column(db.String(255))
+    api_key = db.Column(db.String(255))
+    login_type = NORMAL_LOGIN
 
     def __init__(self, login="none", password="", roles=None):
         if roles is None:
@@ -53,10 +61,12 @@ class User(db.Model, UserMixin):
         self.password = pwd_context.encrypt(password)
         self.is_active = True
         self.roles = roles
+        self.api_key = ""
 
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
 
+api_allowed_roles = ["ANY", "dj"]
 
 principals = Principal(app)
 admin_perm = Permission(RoleNeed("admin"))
@@ -85,7 +95,7 @@ admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
 
 
 class UserAdmin(sqla.ModelView):
-    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment']
+    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment', 'api_key']
     column_exclude_list = ['password']
     column_display_pk = False
     column_searchable_list = ('login', 'display_name')
@@ -139,12 +149,64 @@ def fill_database():
     admin_user.password = pwd_context.encrypt(config.admin_password)
     admin_user.roles = [admin_role, dj_role]
     admin_user.is_active = True
-    admin_user.commit = "admin z config.py, zawsze posiada hasło z config.py"
+    admin_user.comment = "admin z config.py, zawsze posiada haslo z config.py"
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@login_manager.request_loader
+def load_user_from_request(req):
+    api_key = req.args.get('api_key')
+    if api_key:
+        user = get_user_by_api_key(api_key)
+        if user:
+            identity_changed.send(current_app._get_current_object(),
+                                  identity=Identity(user.id))
+            user.login_type = API_LOGIN
+            return user
+
+    api_key = req.headers.get('Authorization')
+    if api_key:
+        api_key = api_key.replace('Basic ', '', 1)
+        try:
+            api_key = base64.b64decode(api_key)
+        except TypeError:
+            pass
+        user = get_user_by_api_key(api_key)
+        if user:
+            identity_changed.send(current_app._get_current_object(),
+                                  identity=Identity(user.id))
+            user.login_type = API_LOGIN
+            return user
+
+    return None
+
+
+def check_login(user, password):
+    try:
+        ldap_user = check_ldap_credentials(user, password)
+    except ldap3.LDAPException as e:
+        print e
+        ldap_user = False
+    user = User.query.filter_by(login=user).first()
+    if user is None and ldap_user:
+        new_user = User(login=user)
+        new_user.comment = "Auto import from LDAP %s" % config.ldap_host
+        db.session.add(new_user)
+        db.session.commit()
+        user = new_user
+    if user is not None and (pwd_context.verify(password, user.password) or ldap_user or
+                             super_admin_can_check()):
+        if ldap_user:
+            if user.display_name != ldap_user['display_name']:
+                user.display_name = ldap_user['display_name']
+                db.session.commit()
+        return user
+    else:
+        return None
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -153,24 +215,9 @@ def login():
     wrong_login = False
 
     if form.validate_on_submit():
-        try:
-            ldap_user = check_ldap_credentials(form.login.data, form.password.data)
-        except ldap3.LDAPException as e:
-            print e
-            ldap_user = False
-        user = User.query.filter_by(login=form.login.data).first()
-        if user is None and ldap_user:
-            new_user = User(login=form.login.data)
-            new_user.comment = "Auto import from LDAP %s" % config.ldap_host
-            db.session.add(new_user)
-            db.session.commit()
-            user = new_user
-        if user is not None and (pwd_context.verify(form.password.data, user.password) or ldap_user or
-                                 super_admin_can_check()):
-            if ldap_user:
-                if user.display_name != ldap_user['display_name']:
-                    user.display_name = ldap_user['display_name']
-                    db.session.commit()
+        user = check_login(form.login.data, form.password.data)
+        if user:
+            user.login_type = NORMAL_LOGIN
             login_user(user, remember=form.remember)
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
@@ -183,6 +230,50 @@ def login():
             form.login.data = current_user.login
 
     return render_template('login.html', form=form, wrong_login=wrong_login)
+
+
+def get_hash_for_api_key(api_key):
+    return hashlib.sha256(api_key).hexdigest()
+
+
+def get_user_by_api_key(api_key):
+    if len(api_key) == 32:
+        api_key_hash = get_hash_for_api_key(api_key)
+        return User.query.filter_by(api_key=api_key_hash).first()
+
+
+def generate_new_api_key(user):
+    new_api_key = secure_random_string_generator(32)
+    new_api_key_hash = get_hash_for_api_key(new_api_key)
+    user.api_key = new_api_key_hash.encode("utf8")
+    db.session.add(user)
+    db.session.commit()
+    return new_api_key
+
+
+@app.route('/get_api_key', methods=['GET', 'POST'])
+@fresh_login_required
+def get_api_key():
+    new_api_key = generate_new_api_key(current_user)
+    return render_template('api_key.html', api_key=new_api_key)
+
+
+@app.route('/api/v1/get_api_key', methods=['GET', 'POST'])
+def api_get_api_key():
+    if request.method == 'POST' and 'login' in request.form and 'password' in request.form:
+        user = request.form['login']
+        password = request.form['pass']
+    else:
+        user = request.args.get('user')
+        password = request.args.get('pass')
+        if not (user and password):
+            return json.dumps({"type": "error", "subtype": "wrong_request", "message": "Missing parameter"})
+    user_obj = check_login(user, password)
+    if user_obj is not None:
+        new_api_key = generate_new_api_key(user_obj)
+        return json.dumps({"type": "ok", "api_key": new_api_key})
+    else:
+        return json.dumps({"type": "error", "subtype": "wrong_login", "message": "Wrong login"})
 
 
 @login_manager.needs_refresh_handler
@@ -217,29 +308,39 @@ def load_identity_when_session_expires():  # restores the identity when restorin
         return Identity(current_user.id)
 
 
+@principals.identity_saver
+def identity_saver(identity):
+    pass  # this shouldn't do anything
+
+
 @identity_loaded.connect_via(app)
 def on_identity_loaded(sender, identity):
     # Set the identity user object
     identity.user = current_user
+    is_normal_login = hasattr(current_user, 'login_type') and current_user.login_type == NORMAL_LOGIN
+    if is_normal_login:
+        identity.provides.add(TypeNeed("normal_login"))
 
     if hasattr(current_user, 'id'):
         identity.provides.add(UserNeed(current_user.id))
 
     if hasattr(current_user, 'roles'):
         for role in current_user.roles:
-            identity.provides.add(RoleNeed(role.name))
+            if role.name in api_allowed_roles or is_normal_login:
+                identity.provides.add(RoleNeed(role.name))
 
     if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
         identity.provides.add(RoleNeed("ANY"))
 
-    if hasattr(current_user, 'login') and current_user.login in config.super_admin:
+    if hasattr(current_user, 'login') and current_user.login in config.super_admin and is_normal_login:
         identity.provides.add(RoleNeed('super_admin'))
         for role in Role.query.all():
             identity.provides.add(RoleNeed(role.name))
 
 
 def super_admin_can_check():
-    if hasattr(current_user, 'login') and current_user.login in config.super_admin:
+    if hasattr(current_user, 'login') and (current_user.login in config.super_admin) \
+       and Permission(TypeNeed("normal_login")).can():
         if login_fresh():
             return True
         else:
