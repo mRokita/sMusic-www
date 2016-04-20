@@ -20,12 +20,11 @@
             <nav>
                 <div class="nav-wrapper blue">
                     <a href="#" class="brand-logo center white-text">sMusic</a>
-                    <ul id="nav-mobile" class="right hide-on-med-and-down">
-                        {% if current_user.is_authenticated %}
+                    <ul id="nav-mobile" style="margin-left:15px;" class="left">
                             <li>{{ current_user.display_name }}</li>
-                            {% if is_admin %}
-                            <li><a style="text-decoration:none" href="/admin">Administracja</a></li>
-                            {% endif %}
+                    </ul>
+                    <ul id="nav-mobile" class="right">
+                        {% if current_user.is_authenticated %}
                             <li><a style="text-decoration:none" href="/logout">Wyloguj</a></li>
                         {% else %}
                             <li><a style="text-decoration:none" href="/login">Zaloguj</a></li>

@@ -15,51 +15,51 @@ Dodaj Utwór
 {% endblock %}
 {% block controller %}downloadStatus{% endblock %}
 {% block main %}
-        <div class="card-panel white col l6 m6 s12">
-            <form method="POST" action="/upload/" class="col s12">
-                {% if message!="" %}
-                <div class="card-panel yellow lighten-2"><h5>{{ message }}</h5></div>
-                {% endif %}
-                {{ form.hidden_tag() }}
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.url.label }}
-                        {{ form.url(class="validate") }}
-                        <ul class="errors">{% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    <div class="row card-panel grey" style="padding:0px;">
+        <div class="col l6 m6 s12">
+            <div class="card-panel white row">
+                <form method="POST" action="/upload/" class="col s12 m12 l12">
+                    {{ form.hidden_tag() }}
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.url.label }}
+                            {{ form.url(class="validate") }}
+                            <ul class="errors">{% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.artist.label }}
-                        {{ form.artist(class="validate") }}
-                        <ul class="errors">{% for error in form.artist.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.artist.label }}
+                            {{ form.artist(class="validate") }}
+                            <ul class="errors">{% for error in form.artist.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.album.label }}
-                        {{ form.album(class="validate") }}
-                        <ul class="errors">{% for error in form.album.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.album.label }}
+                            {{ form.album(class="validate") }}
+                            <ul class="errors">{% for error in form.album.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="input-field col s12">
-                        {{ form.track.label }}
-                        {{ form.track(class="validate") }}
-                        <ul class="errors">{% for error in form.track.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.track.label }}
+                            {{ form.track(class="validate") }}
+                            <ul class="errors">{% for error in form.track.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light" type="submit" name="action">Submit
-                            <i class="material-icons right">send</i>
-                        </button>
+                    <div class="row">
+                        <div class="col s12">
+                            <button class="btn waves-effect waves-light" type="submit" name="action">POBIERZ
+                                <i class="material-icons right">send</i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
         <div class="col l6 m6 s12">
-            <div class="card-panel white">
+            <div class="card-panel white row">
                 <h5 style="margin-top:0">Kolejka</h5>
                 {% raw %}
                     <div data-ng-if="is_downloading">
@@ -78,11 +78,17 @@ Dodaj Utwór
                     <div data-ng-if="!is_downloading">
                         Nie ma plików w kolejce
                     </div>
-                </div>
                 {% endraw %}
             </div>
         </div>
+    </div>
+
 {% endblock %}
 {% block script %}
     <script type="text/javascript" src="/static/js/main.js"></script>
+    {% if message %}
+    <script type="text/javascript">
+        Materialize.toast('Dodano plik do kolejki!', 3000)
+    </script>
+    {% endif %}
 {% endblock %}
