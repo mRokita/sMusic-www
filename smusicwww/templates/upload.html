@@ -70,8 +70,8 @@ Dodaj Utwór
 
                         <ul class="collection" >
                             <li class="collection-item" data-ng-repeat="item in queue">
-                                <span data-ng-if="!(item.track && item.artist && item.album)" class="secondary-content">{{ item.url }}</span>
-                                <span data-ng-if="item.track && item.artist && item.album" class="secondary-content">{{ item.track }}&nbsp;-&nbsp;{{ item.artist }}&nbsp;-&nbsp;{{ item.album }}</span></li>
+                                <span data-ng-if="!(item.track && item.artist && item.album)">{{ item.url }}</span>
+                                <span data-ng-if="item.track && item.artist && item.album">{{ item.track }}&nbsp;-&nbsp;{{ item.artist }}&nbsp;-&nbsp;{{ item.album }}</span></li>
                         </ul>
                         <button class="waves-effect waves-light btn" data-ng-click="clearDownloadQueue()">WYCZYŚĆ</button>
                     </div>
