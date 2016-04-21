@@ -19,6 +19,7 @@ import config
 import base64
 import hashlib
 import json
+from wtforms.fields import PasswordField
 
 NORMAL_LOGIN = 0
 API_LOGIN = 1
@@ -97,8 +98,17 @@ admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
 class UserAdmin(sqla.ModelView):
     form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment', 'api_key']
     column_exclude_list = ['password']
+    form_excluded_columns = ('password',)
     column_display_pk = False
     column_searchable_list = ('login', 'display_name')
+    def scaffold_form(self):
+        form_class = super(UserAdmin, self).scaffold_form()
+        form_class.password2 = PasswordField('New Password')
+        return form_class
+
+    def on_model_change(self, form, model, is_created):
+        if len(model.password2):
+            model.password = pwd_context.encrypt(model.password2)
 
 
 admin.add_view(UserAdmin(User, db.session))
