@@ -26,10 +26,10 @@
                     <li class="collection-item grey lighten-2">
                         <b>Wykonawca:</b> <a data-ng-href="/library/{{ track.artist_id }}/">{{ track.artist_name }}</a>
                     </li>
-                    <li class="collection-item blue-grey" data-ng-if="isTouch" data-ng-click="addToQueue(track.artist_id, track.album_id, track.id)" href="javascript:void(0)">
+                    <li class="collection-item blue-grey" data-ng-if="isTouch" data-ng-click="addToQueue(track.artist_id, track.album_id, track.id)">
                         <a class="white-text">Dodaj do kolejki</a>
                     </li>
-                    <li class="collection-item blue-grey" data-ng-if="isTouch" data-ng-click="clearQueueAndPlayTrack(track.artist_id, track.album_id, track.id)" ref="javascript:void(0)"> 
+                    <li class="collection-item blue-grey" data-ng-if="isTouch" data-ng-click="clearQueueAndPlayTrack(track.artist_id, track.album_id, track.id)">
                         <a class="white-text">Wyczyść kolejkę i zacznij grać</a>
                     </li>
                 </ul>
