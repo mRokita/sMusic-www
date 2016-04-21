@@ -1,3 +1,14 @@
+function is_touch_device() {  
+    try {  
+        document.createEvent("TouchEvent");
+        return true; 
+    } catch (e) {  
+        return false;  
+    }       
+}
+
+
+
 function str_pad_left(string) {
     return ("0"+string).slice(-2);
 }
@@ -26,7 +37,10 @@ function findTrackWithId(track_id, tracks){
     return track
 }
 
-var app = angular.module('sMusic', []);
+var app = angular.module('sMusic', [])
+app.run(function($rootScope){
+    $rootScope.isTouch = is_touch_device();
+});
 app.controller('libraryMainView', function($scope, $http){
     $scope.loadData = function(){
         $http.get("/api/v1/library/").success(function(response){

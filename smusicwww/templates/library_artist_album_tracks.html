@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="col l7 m7 s12 grey">
-            <ul class="collection hide-on-small-only white">
+            <ul class="collection white" data-ng-if="!isTouch">
                 <li data-ng-repeat="track in tracks" class="collection-item">
                     <span>{{ track.title }}</span>
                     <span class="secondary-content">
@@ -34,13 +34,13 @@
                     </span>
                 </li>
             </ul>
-            <ul class="collapsible hide-on-med-and-up white" data-collapsible="accordion">
+            <ul class="collapsible white" data-ng-if="isTouch" data-collapsible="accordion">
                 <li data-ng-repeat="track in tracks">
                     <div class="collapsible-header">{{ track.title }}</div>
                     <div class="collapsible-body blue-grey">
                         <ul class="collection blue-grey">
-                            <li class="collection-item blue-grey"><a href="javascript:void(0)" class="white-text" data-ng-click="addToQueue(track.id)">Dodaj do kolejki</a></li>
-                            <li class="collection-item blue-grey"><a href="javascript:void(0)" class="white-text" data-ng-click="clearQueueAndPlayTrack(track.id)">Wyczyść kolejkę i zacznij grać</a></li>
+                            <li class="collection-item blue-grey" data-ng-click="addToQueue(track.id)" href="javascript:void(0)"><a class="white-text">Dodaj do kolejki</a></li>
+                            <li class="collection-item blue-grey" data-ng-click="clearQueueAndPlayTrack(track.id)" href="javascript:void(0)"><a class="white-text">Wyczyść kolejkę i zacznij grać</a></li>
                         </ul>
                     </div>
                 </li>
