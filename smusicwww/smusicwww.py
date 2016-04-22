@@ -29,12 +29,14 @@ app.secret_key = config.secret_key
 
 
 @app.context_processor
-def inject_is_admin():
+def inject_navigation_bar_data():
     navigation_bar = [('/', 'index', u'Odtwarzacz'),
-                      ('/library/', 'library', u'Biblioteka'),
-                      ('/upload/', 'upload', u'Dodawanie utworów'),
-                      ('/admin/', 'admin', u'Administracja')]
-    return dict(is_admin=admin_perm.can(), can_upload=upload_perm.can(), navigation_bar=navigation_bar)
+                      ('/library/', 'library', u'Biblioteka')]
+    if upload_perm.can():
+        navigation_bar.append(('/upload/', 'upload', u'Dodawanie utworów'))
+    if admin_perm.can():
+        navigation_bar.append(('/admin/', 'admin', u'Administracja'))
+    return dict(navigation_bar=navigation_bar)
 
 
 @app.before_first_request
