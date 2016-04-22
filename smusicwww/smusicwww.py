@@ -8,9 +8,9 @@ from shared import app, db
 from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
 import access_control
 import config
-import radio_utils
 import upload
 from __init__ import __version__
+from flask_login import current_user
 
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
@@ -53,7 +53,7 @@ def fix_chars(string):
 
 
 def render_template_with_args(template, **kwargs):
-    return render_template(template, radio_utils=radio_utils, version=__version__, **kwargs)
+    return render_template(template, version=__version__, **kwargs)
 
 
 @app.route('/')
@@ -89,77 +89,77 @@ def ui_library_artist_album(artist, album):
 @app.route('/api/v1/library/')
 @library_browse_perm.require(http_exception=403)
 def api_v1_library():
-    return json.dumps(radio_utils.get_artists())
+    return json.dumps(current_user.radio.get_artists())
 
 
 @app.route('/api/v1/library/<artist>/')
 @library_browse_perm.require(http_exception=403)
 def api_v1_library_artist(artist):
-    return json.dumps(radio_utils.get_albums(artist))
+    return json.dumps(current_user.radio.get_albums(artist))
 
 
 @app.route('/api/v1/library/<artist>/<album>/')
 @library_browse_perm.require(http_exception=403)
 def api_v1_library_artist_album(artist, album):
-    return json.dumps(radio_utils.get_tracks(artist, album))
+    return json.dumps(current_user.radio.get_tracks(artist, album))
 
 
 @app.route('/api/v1/play_next/')
 @music_control_perm.require(http_exception=403)
 def api_v1_play_next():
-    return json.dumps(radio_utils.play_next())
+    return json.dumps(current_user.radio.play_next())
 
 
 @app.route('/api/v1/play_prev/')
 @music_control_perm.require(http_exception=403)
 def api_v1_play_prev():
-    return json.dumps(radio_utils.play_prev())
+    return json.dumps(current_user.radio.play_prev())
 
 
 @app.route('/api/v1/pause/')
 @music_control_perm.require(http_exception=403)
 def api_v1_pause():
-    return json.dumps(radio_utils.pause())
+    return json.dumps(current_user.radio.pause())
 
 
 @app.route('/api/v1/vol/<value>/')
 @music_control_perm.require(http_exception=403)
 def api_v1_vol(value):
-    return json.dumps(radio_utils.set_vol(value))
+    return json.dumps(current_user.radio.set_vol(value))
 
 
 @app.route('/api/v1/status/')
 def api_v1_status():
-    return json.dumps(radio_utils.get_status())
+    return json.dumps(current_user.radio.get_status())
 
 
 @app.route('/api/v1/clear_q_and_play/<artist_id>/<album_id>/<track_id>/')
 @music_control_perm.require(http_exception=403)
 def api_v1_clear_q_and_play(artist_id, album_id, track_id):
-    return json.dumps(radio_utils.clear_queue_and_play(artist_id, album_id, track_id))
+    return json.dumps(current_user.radio.clear_queue_and_play(artist_id, album_id, track_id))
 
 
 @app.route('/api/v1/clear_queue/')
 @music_control_perm.require(http_exception=403)
 def api_v1_clear_queue():
-    return json.dumps(radio_utils.clear_queue())
+    return json.dumps(current_user.radio.clear_queue())
 
 
 @app.route('/api/v1/add_to_q/<artist_id>/<album_id>/<track_id>/')
 @music_control_perm.require(http_exception=403)
 def api_v1_add_to_q(artist_id, album_id, track_id):
-    return json.dumps(radio_utils.add_to_queue(artist_id, album_id, track_id))
+    return json.dumps(current_user.radio.add_to_queue(artist_id, album_id, track_id))
 
 
 @app.route('/api/v1/current_queue/')
 def api_v1_current_queue():
-    return json.dumps(radio_utils.get_current_queue())
+    return json.dumps(current_user.radio.get_current_queue())
 
 
 @app.route('/api/v1/search_track/<query>')
 @library_browse_perm.require(http_exception=403)
 def api_v1_search_track(query):
-    return json.dumps(radio_utils.search_for_track(query))
+    return json.dumps(current_user.radio.search_for_track(query))
 
 
 @app.route('/api/v1/albumart/<artist>/<album>/')
@@ -172,7 +172,7 @@ def api_v1_album_art(artist, album):
 @app.route('/api/v1/play/')
 @music_control_perm.require(http_exception=403)
 def play():
-    return json.dumps(radio_utils.play())
+    return json.dumps(current_user.radio.play())
 
 if __name__ == '__main__':
     app.debug = True
