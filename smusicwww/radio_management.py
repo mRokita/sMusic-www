@@ -139,7 +139,7 @@ class Radio(db.Model):
 
 
 class RadioAdmin(sqla.ModelView):
-    form_columns = ['name', 'comment']
+    form_columns = ['name', 'comment', 'users']
     column_exclude_list = ['access_key']
     form_excluded_columns = ('password',)
     column_searchable_list = ('name',)

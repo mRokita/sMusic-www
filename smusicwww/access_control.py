@@ -99,7 +99,7 @@ admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
 
 
 class UserAdmin(sqla.ModelView):
-    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment', 'api_key']
+    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'radio', 'comment', 'api_key']
     column_exclude_list = ['password']
     form_excluded_columns = ('password',)
     column_display_pk = False
