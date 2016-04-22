@@ -20,6 +20,7 @@ import base64
 import hashlib
 import json
 from wtforms.fields import PasswordField
+from radio_management import Radio, RadioAdmin
 
 NORMAL_LOGIN = 0
 API_LOGIN = 1
@@ -48,6 +49,8 @@ class User(db.Model, UserMixin):
     display_name = db.Column(db.String(255))
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    radio_id = db.Column(db.Integer, db.ForeignKey('radio.id'))
+    radio = db.relationship('Radio', back_populates='users')
     comment = db.Column(db.String(255))
     api_key = db.Column(db.String(255))
     login_type = NORMAL_LOGIN
@@ -100,7 +103,8 @@ class UserAdmin(sqla.ModelView):
     column_exclude_list = ['password']
     form_excluded_columns = ('password',)
     column_display_pk = False
-    column_searchable_list = ('login', 'display_name')
+    column_searchable_list = ('login', 'display_name', 'radio_id')
+
     def scaffold_form(self):
         form_class = super(UserAdmin, self).scaffold_form()
         form_class.password2 = PasswordField('New Password')
@@ -121,6 +125,7 @@ class RoleAdmin(sqla.ModelView):
 
 
 admin.add_view(RoleAdmin(Role, db.session))
+admin.add_view(RadioAdmin(Radio, db.session))
 
 
 def check_ldap_credentials(username, password):
@@ -155,9 +160,11 @@ def check_ldap_credentials(username, password):
 def fill_database():
     admin_role = get_or_create(db.session, Role, name='admin')
     dj_role = get_or_create(db.session, Role, name='dj')
+    default_radio = get_or_create(db.session, Radio, name='default')
     admin_user = get_or_create(db.session, User, login=config.admin_login)
     admin_user.password = pwd_context.encrypt(config.admin_password)
     admin_user.roles = [admin_role, dj_role]
+    admin_user.radio = default_radio
     admin_user.is_active = True
     admin_user.comment = "admin z config.py, zawsze posiada haslo z config.py"
 
