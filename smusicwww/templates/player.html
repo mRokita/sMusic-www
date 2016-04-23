@@ -62,11 +62,11 @@ Panel główny
                 <form action="#" >
                     <p class="range-field">
                         <label for="progress" width="100%">{{ trackTitle }} - <span data-ng-if="isFileLoaded">{{ trackAlbum }} - {{ trackArtist }}&nbsp;&nbsp;&nbsp;</span>[{{ position_readable }}/{{ duration_readable }}]</label>
-                        <input type="range" id="progress" step="1" min="0" max="{{ duration }}" data-ng-model="position" disabled="disabled"/>
+                        <input type="range" id="progress" step="1" min="0" max="{{ duration }}" data-ng-model="position" data-ng-change="seek()" />
                     </p>
                     <p class="range-field" >
                         <label for="volume">Głośność</label>
-                        <input type="range" id="volume" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()"/>
+                        <input type="range" id="volume" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()" />
                     </p>
                 </form>
             </div>

@@ -72,6 +72,8 @@ def get_status():
 def set_vol(value):
     return send_for_result({"request": "set_vol", "value": value})
 
+def seek(position):
+    return send_for_result({"request": "seek", "position": position})
 
 def play_prev():
     return send_for_result({"request": "play_prev"})
