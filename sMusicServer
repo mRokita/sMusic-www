@@ -119,6 +119,7 @@ class ClientHandler(Thread):
 
     def run(self):
         global msgid
+        global radios_connections
         logs.print_debug("%s:%s połączył się" % self.addr)
         self.conn.write(escape(json.dumps({"request": "type"})))
         msg = self.conn.read()
@@ -180,6 +181,9 @@ class ClientHandler(Thread):
 
             msg = self.conn.read()
         self.conn.close()
+        if self.type == RADIO_TYPE:
+            radios_connections = {key: value for key, value in radios_connections.items()
+                                  if value is not self.conn}
         logs.print_debug("%s:%s rozłączył się" % self.addr)
 
     def stop(self):
