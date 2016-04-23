@@ -5,7 +5,8 @@ import re
 from urllib import urlopen
 
 from shared import app, db
-from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
+from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm, radio_change_perm
+from radio_management import Radio
 import access_control
 import config
 import upload
@@ -36,7 +37,13 @@ def inject_navigation_bar_data():
         navigation_bar.append(('/upload/', 'upload', u'Dodawanie utworów'))
     if admin_perm.can():
         navigation_bar.append(('/admin/', 'admin', u'Administracja'))
-    return dict(navigation_bar=navigation_bar)
+    ret = dict(navigation_bar=navigation_bar)
+    ret["radio_change_can"] = False
+    if radio_change_perm.can():
+        ret["radios"] = [{"id": radio.id, "name": radio.name} for radio in Radio.query.all()]
+        ret["radio_current_name"] = current_user.radio.name
+        ret["radio_change_can"] = True
+    return ret
 
 
 @app.before_first_request

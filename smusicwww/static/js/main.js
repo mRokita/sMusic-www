@@ -38,8 +38,13 @@ function findTrackWithId(track_id, tracks){
 }
 
 var app = angular.module('sMusic', [])
-app.run(function($rootScope){
+app.run(function($rootScope, $http){
     $rootScope.isTouch = is_touch_device();
+    $rootScope.change_radio = function(id){
+        $http.get("/api/v1/change_radio/"+id).success(function(response){
+            location.reload();
+        });
+    }
 });
 app.controller('libraryMainView', function($scope, $http){
     $scope.loadData = function(){

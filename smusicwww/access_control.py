@@ -20,10 +20,22 @@ import base64
 import hashlib
 import json
 from wtforms.fields import PasswordField
-from radio_management import Radio, RadioAdmin
+
 
 NORMAL_LOGIN = 0
 API_LOGIN = 1
+
+
+principals = Principal(app)
+admin_perm = Permission(RoleNeed("admin"))
+music_control_perm = Permission(RoleNeed("dj"))
+library_browse_perm = Permission(RoleNeed("ANY"))
+upload_perm = Permission(RoleNeed("dj"))
+radio_change_perm = Permission(RoleNeed("super_admin"))
+
+
+from radio_management import Radio
+
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -71,12 +83,6 @@ class User(db.Model, UserMixin):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
 
 api_allowed_roles = ["ANY", "dj"]
-
-principals = Principal(app)
-admin_perm = Permission(RoleNeed("admin"))
-music_control_perm = Permission(RoleNeed("dj"))
-library_browse_perm = Permission(RoleNeed("ANY"))
-upload_perm = Permission(RoleNeed("dj"))
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)
@@ -127,6 +133,15 @@ class RoleAdmin(AdminBaseModelView):
 
 
 admin.add_view(RoleAdmin(Role, db.session))
+
+
+class RadioAdmin(AdminBaseModelView):
+    form_columns = ['name', 'comment', 'users', 'access_key']
+    column_exclude_list = ['access_key']
+    form_excluded_columns = ('password',)
+    column_searchable_list = ('name',)
+
+
 admin.add_view(RadioAdmin(Radio, db.session))
 
 

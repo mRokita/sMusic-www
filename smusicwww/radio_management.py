@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import request, render_template, redirect, current_app, session, url_for
+from flask import request, render_template, redirect, current_app, url_for
 from werkzeug.routing import RequestRedirect
 import flask
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin, \
@@ -13,7 +13,7 @@ from passlib.apps import custom_app_context as pwd_context
 
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
-from access_control import AdminBaseModelView
+from access_control import radio_change_perm
 import access_control
 import config
 import json
@@ -139,10 +139,14 @@ class Radio(db.Model):
         return self.send_request({"request": "download_status"})
 
 
-class RadioAdmin(AdminBaseModelView):
-    form_columns = ['name', 'comment', 'users', 'access_key']
-    column_exclude_list = ['access_key']
-    form_excluded_columns = ('password',)
-    column_searchable_list = ('name',)
-
-
+@app.route('/api/v1/change_radio/<radio_id>')
+@radio_change_perm.require(http_exception=403)
+def self_change_radio(radio_id):
+    radio = Radio.query.get(radio_id)
+    if radio is not None:
+        current_user.radio = radio
+        db.session.add(current_user)
+        db.session.commit()
+        return json.dumps({"type": "ok"})
+    else:
+        return json.dumps({"type": "error", "subtype": "wrong_id", "message": "Radio o podanym ID nie istnieje"})
