@@ -136,8 +136,8 @@ admin.add_view(RoleAdmin(Role, db.session))
 
 
 class RadioAdmin(AdminBaseModelView):
-    form_columns = ['name', 'comment', 'users', 'access_key']
-    column_exclude_list = ['access_key']
+    form_columns = ['name', 'comment', 'users']
+    column_exclude_list = []
     form_excluded_columns = ('password',)
     column_searchable_list = ('name',)
 
