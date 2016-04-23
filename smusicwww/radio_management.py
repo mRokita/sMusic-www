@@ -13,6 +13,7 @@ from passlib.apps import custom_app_context as pwd_context
 
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
+from access_control import AdminBaseModelView
 import access_control
 import config
 import json
@@ -138,7 +139,7 @@ class Radio(db.Model):
         return self.send_request({"request": "download_status"})
 
 
-class RadioAdmin(sqla.ModelView):
+class RadioAdmin(AdminBaseModelView):
     form_columns = ['name', 'comment', 'users', 'access_key']
     column_exclude_list = ['access_key']
     form_excluded_columns = ('password',)

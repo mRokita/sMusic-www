@@ -88,18 +88,20 @@ login_manager.needs_refresh_message_category = "info"
 
 
 class MyAdminIndexView(AdminIndexView):
-    @flask_admin.expose('/')
-    @admin_perm.require(http_exception=403)
-    @fresh_login_required
-    def index(self):
-        return super(MyAdminIndexView, self).index()
+    def is_accessible(self):
+        return admin_perm.can() and login_fresh()
 
 
 admin = Admin(app, name='sMusic', index_view=MyAdminIndexView())
 
 
-class UserAdmin(sqla.ModelView):
-    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'radio', 'comment', 'api_key']
+class AdminBaseModelView(sqla.ModelView):
+    def is_accessible(self):
+        return admin_perm.can() and login_fresh()
+
+
+class UserAdmin(AdminBaseModelView):
+    form_columns = ['login', 'display_name', 'password', 'is_active', 'roles', 'comment', 'api_key']
     column_exclude_list = ['password']
     form_excluded_columns = ('password',)
     column_display_pk = False
@@ -118,7 +120,7 @@ class UserAdmin(sqla.ModelView):
 admin.add_view(UserAdmin(User, db.session))
 
 
-class RoleAdmin(sqla.ModelView):
+class RoleAdmin(AdminBaseModelView):
     can_create = False
     can_delete = False
     form_columns = ['users']
