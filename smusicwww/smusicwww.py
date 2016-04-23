@@ -126,6 +126,11 @@ def api_v1_vol(value):
     return json.dumps(radio_utils.set_vol(value))
 
 
+@app.route('/api/v1/seek/<position>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_seek(position):
+    return json.dumps(radio_utils.seek(position))
+
 @app.route('/api/v1/status/')
 def api_v1_status():
     return json.dumps(radio_utils.get_status())

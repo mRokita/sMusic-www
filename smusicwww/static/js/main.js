@@ -177,6 +177,10 @@ app.controller('playerStatus', function($scope, $http, $interval){
         $http.get("/api/v1/vol/"+$scope.volume+"/");
     };
 
+    $scope.seek = function(){
+        $http.get('/api/v1/seek/'+$scope.position+'/');
+    };
+    
     $scope.playerPause = function(){
         $http.get("/api/v1/pause/");
     };
