@@ -37,13 +37,19 @@ function findTrackWithId(track_id, tracks){
     return track
 }
 
-var app = angular.module('sMusic', [])
-app.run(function($rootScope, $http){
+var app = angular.module('sMusic', ['ngCookies'])
+app.run(function($rootScope, $http, $cookies){
     $rootScope.isTouch = is_touch_device();
     $rootScope.change_radio = function(id){
         $http.get("/api/v1/change_radio/"+id).success(function(response){
             location.reload();
         });
+    }
+    $rootScope.change_radio_anonymous = function(id){
+        var expireDate = new Date();
+        expireDate.setDate(expireDate.getDate() + 365);
+        $cookies.put('radio', id, {'expires': expireDate});
+        location.reload();
     }
 });
 app.controller('libraryMainView', function($scope, $http){

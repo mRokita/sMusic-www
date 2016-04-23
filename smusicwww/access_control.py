@@ -20,6 +20,7 @@ import base64
 import hashlib
 import json
 from wtforms.fields import PasswordField
+from flask.ext.login import AnonymousUserMixin
 
 
 NORMAL_LOGIN = 0
@@ -82,6 +83,13 @@ class User(db.Model, UserMixin):
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
 
+
+class Anonymous(AnonymousUserMixin):
+    def __init__(self):
+        self.radio_id = request.cookies.get('radio', 1)
+        self.radio = Radio.query.get(self.radio_id)
+
+
 api_allowed_roles = ["ANY", "dj"]
 
 login_manager = LoginManager(app)
@@ -91,6 +99,7 @@ login_manager.needs_refresh_message = (
     u"To protect your account, please reauthenticate to access this page."
 )
 login_manager.needs_refresh_message_category = "info"
+login_manager.anonymous_user = Anonymous
 
 
 class MyAdminIndexView(AdminIndexView):

@@ -39,9 +39,9 @@ def inject_navigation_bar_data():
         navigation_bar.append(('/admin/', 'admin', u'Administracja'))
     ret = dict(navigation_bar=navigation_bar)
     ret["radio_change_can"] = False
+    ret["radios"] = [{"id": radio.id, "name": radio.name} for radio in Radio.query.all()]
+    ret["radio_current_name"] = current_user.radio.name
     if radio_change_perm.can():
-        ret["radios"] = [{"id": radio.id, "name": radio.name} for radio in Radio.query.all()]
-        ret["radio_current_name"] = current_user.radio.name
         ret["radio_change_can"] = True
     return ret
 
