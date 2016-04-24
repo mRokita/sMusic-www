@@ -13,14 +13,16 @@ from threading import Thread
 from smusicwww import logs
 from smusicwww import config
 from smusicwww import __version__
-from sqlalchemy import Integer, Column, String, create_engine
+from sqlalchemy import Integer, Column, String, create_engine, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import datetime
 
 UNAUTHORIZED_TYPE = 0
 RADIO_TYPE = 1
 WWW_TYPE = 2
 
+aktualizacja_last_seen = datetime.timedelta(seconds=5)
 msgid = 0
 queries = {}
 radios_connections = {}
@@ -34,6 +36,7 @@ class Radio(Base):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
     access_key = Column(String(32), unique=True)
+    last_seen = Column(DateTime())
 
 # From writeonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
 # Based on code by Yannick Gingras
@@ -58,7 +61,7 @@ def db_setup(connstring='sqlite:///:memory:',
 
 # end from riteonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
 
-session, engine = db_setup(config.database_uri)
+session, engine = db_setup(config.database_uri, readonly=False)
 
 
 class Binder():
@@ -97,23 +100,23 @@ def ok(conn, addr, type, version, key=None):
                                      u"type": u"incompatibleVersions",
                                      u"cat": u"=^..^=",
                                      u"comment": u"Niekompatybilne wersje komponentow systemu."})))
-        return UNAUTHORIZED_TYPE
+        return UNAUTHORIZED_TYPE, None
     if type == "radio":
         radio = session.query(Radio).filter_by(access_key=key).first()
         if radio is not None:
             radios_connections[radio.id] = conn
             logs.print_debug("%s:%s został zarejestrowany jako RADIO o id=%s" % (addr[0], addr[1], str(radio.id)))
-            return RADIO_TYPE
+            return RADIO_TYPE, radio
         else:
             conn.send(escape(json.dumps({u"request": u"error",
                                          u"type": u"wrongKey",
                                          u"cat": u"=^..^=",
                                          u"comment": u"Podany klucz radia jest bledny"})))
-            return UNAUTHORIZED_TYPE
+            return UNAUTHORIZED_TYPE, None
     if type == "www" and addr[0] == "127.0.0.1":
         logs.print_debug("%s:%s został zarejestrowany jako WWW" % addr)
-        return WWW_TYPE
-    return UNAUTHORIZED_TYPE
+        return WWW_TYPE, None
+    return UNAUTHORIZED_TYPE, None
 
 
 class ClientHandler(Thread):
@@ -124,6 +127,7 @@ class ClientHandler(Thread):
         self.conn = conn
         self.addr = addr
         self.type = UNAUTHORIZED_TYPE
+        self.object = None
 
     def run(self):
         global msgid
@@ -136,6 +140,12 @@ class ClientHandler(Thread):
             buff += msg
             parsed_msg = PATTERN_MSG.findall(buff)
             if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
+                if self.type == RADIO_TYPE:
+                    if self.object.last_seen is None or self.object.last_seen + aktualizacja_last_seen < datetime.datetime.now():
+                        self.object.last_seen = datetime.datetime.now()
+                        print self.object.last_seen
+                        session.add(self.object)
+                        session.commit()
                 buff = parsed_msg[0][1]
                 esc_string = parsed_msg[0][0]
                 try:
@@ -189,7 +199,7 @@ class ClientHandler(Thread):
                         elif data["request"] == "ok":
                             datacpy = dict(data)
                             del datacpy["request"]
-                            self.type = ok(self.conn, self.addr, **datacpy)
+                            self.type, self.object = ok(self.conn, self.addr, **datacpy)
 
                 except ValueError as e:
                     print [un_escape(esc_string)]

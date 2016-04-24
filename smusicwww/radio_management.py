@@ -56,6 +56,7 @@ class Radio(db.Model):
     comment = db.Column(db.String(1024))
     column_display_pk = False
     users = db.relationship("User", back_populates="radio")
+    last_seen = db.Column(db.DateTime())
 
     def generate_new_access_key(self):
         self.access_key = secure_random_string_generator(32)

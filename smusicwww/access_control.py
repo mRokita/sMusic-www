@@ -88,6 +88,9 @@ class Anonymous(AnonymousUserMixin):
     def __init__(self):
         self.radio_id = request.cookies.get('radio', 1)
         self.radio = Radio.query.get(self.radio_id)
+        if self.radio is None:
+            self.radio_id = 1
+            self.radio = Radio.query.get(1)
 
 
 api_allowed_roles = ["ANY", "dj"]
@@ -146,7 +149,7 @@ admin.add_view(RoleAdmin(Role, db.session))
 
 class RadioAdmin(AdminBaseModelView):
     form_columns = ['name', 'comment', 'users']
-    column_exclude_list = []
+    column_list = ('name', 'comment', 'access_key', 'last_seen')
     form_excluded_columns = ('password',)
     column_searchable_list = ('name',)
 
