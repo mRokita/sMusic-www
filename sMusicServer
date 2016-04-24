@@ -22,12 +22,12 @@ RADIO_TYPE = 1
 WWW_TYPE = 2
 
 msgid = 0
-binds = {}
 queries = {}
 radios_connections = {}
 PATTERN_MSG = re.compile("([ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=+/]*?)\n(.+)?", re.DOTALL)
 
 Base = declarative_base()
+
 
 class Radio(Base):
     __tablename__ = 'radio'
@@ -37,6 +37,7 @@ class Radio(Base):
 
 # From writeonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
 # Based on code by Yannick Gingras
+
 
 def abort_ro(*args,**kwargs):
     ''' the terrible consequences for trying
@@ -60,19 +61,26 @@ def db_setup(connstring='sqlite:///:memory:',
 session, engine = db_setup(config.database_uri)
 
 
-def bind(function):
-    argspec = getargspec(function)
-    args = argspec[0]
-    if argspec[-1]:
-        req_args = args[:len(argspec[-1])-1]
-    else:
-        req_args = args
-    binds[function.__name__] = {
-        "target": function,
-        "reqired_args": req_args,
-        "args": args
-    }
-    return function
+class Binder():
+    def __init__(self):
+        self.binds = {}
+
+    def bind(self, function):
+        argspec = getargspec(function)
+        args = argspec[0]
+        if argspec[-1]:
+            req_args = args[:len(argspec[-1])-1]
+        else:
+            req_args = args
+        self.binds[function.__name__] = {
+            "target": function,
+            "reqired_args": req_args,
+            "args": args
+        }
+        return function
+
+radio_comm = Binder()
+www_comm = Binder()
 
 
 def escape(msg):
@@ -136,19 +144,27 @@ class ClientHandler(Thread):
                     if "request" in data:
                         if self.type == WWW_TYPE:
                             if "radio" in data:
-                                msgid += 1
-                                datacpy = dict(data)
-                                datacpy["msgid"] = msgid
-                                del datacpy["radio"]
-                                queries[msgid] = self.conn
-                                if data["radio"] in radios_connections:
-                                    radio = radios_connections[data["radio"]]
-                                    radio.write(escape(json.dumps(datacpy)))
+                                if data["radio"] == -1:
+                                    datacpy = dict(data)
+                                    send_response = datacpy["request"] != "ok"
+                                    del datacpy["request"]
+                                    ret = www_comm.binds[data["request"]]["target"](**datacpy)
+                                    if send_response:
+                                        self.conn.send(escape(json.dumps(ret)))
                                 else:
-                                    self.conn.send(escape(json.dumps({u"request": u"error",
-                                                                      u"type": u"radioNotConnected",
-                                                                      u"cat": u"=^..^=",
-                                                                      u"comment": u"Radio o id %s nie jest podlaczone" % data["radio"]})))
+                                    msgid += 1
+                                    datacpy = dict(data)
+                                    datacpy["msgid"] = msgid
+                                    del datacpy["radio"]
+                                    queries[msgid] = self.conn
+                                    if data["radio"] in radios_connections:
+                                        radio = radios_connections[data["radio"]]
+                                        radio.write(escape(json.dumps(datacpy)))
+                                    else:
+                                        self.conn.send(escape(json.dumps({u"request": u"error",
+                                                                          u"type": u"radioNotConnected",
+                                                                          u"cat": u"=^..^=",
+                                                                          u"comment": u"Radio o id %s nie jest podlaczone" % data["radio"]})))
                             else:
                                 self.conn.send(escape(json.dumps({u"request": u"error",
                                                                   u"type": u"missingParameter",
@@ -158,7 +174,7 @@ class ClientHandler(Thread):
                         elif self.type == RADIO_TYPE:
                             if "msgid" not in data:
                                 datacpy = dict(data)
-                                target = binds[datacpy["request"]]["target"]
+                                target = radio_comm.binds[datacpy["request"]]["target"]
                                 send_response = datacpy["request"] != "ok"
                                 del datacpy["request"]
                                 ret = target(self.conn, self.addr, **datacpy)
