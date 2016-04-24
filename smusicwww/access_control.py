@@ -11,7 +11,7 @@ import flask_admin
 from flask_admin.contrib import sqla
 import ldap3
 from passlib.apps import custom_app_context as pwd_context
-
+from templating import render_template_with_args
 from forms import LoginForm
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
@@ -242,7 +242,7 @@ def login():
         if hasattr(current_user, 'login'):
             form.login.data = current_user.login
 
-    return render_template('login.html', form=form, wrong_login=wrong_login)
+    return render_template_with_args('login.html', form=form, wrong_login=wrong_login)
 
 
 def get_hash_for_api_key(api_key):
@@ -298,7 +298,7 @@ def refresh():
 def permission_denied_handler(e):
     print (e)
     if current_user.is_authenticated:
-        return render_template('permission_denied.html')
+        return render_template_with_args('permission_denied.html')
     else:
         return redirect(url_for('login', next=request.url))
 

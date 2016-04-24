@@ -3,14 +3,13 @@ from flask import request, render_template, redirect, Response, stream_with_cont
 import json
 import re
 from urllib import urlopen
-
+from templating import render_template_with_args
 from shared import app, db
 from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
 import access_control
 import config
 import radio_utils
 import upload
-from __init__ import __version__
 
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
@@ -50,10 +49,6 @@ def fix_chars(string):
     for char in CHAR_FIX:
         string = string.replace(char, CHAR_FIX[char])
     return string
-
-
-def render_template_with_args(template, **kwargs):
-    return render_template(template, radio_utils=radio_utils, version=__version__, **kwargs)
 
 
 @app.route('/')
