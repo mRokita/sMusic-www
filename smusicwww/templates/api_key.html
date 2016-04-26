@@ -1,15 +1,6 @@
 {% extends "base.html" %}
 {% set active_page = "login" %}
 {% block title %}sMusic-www - Minimal Preview{% endblock %}
-{% block menu %}
-    <div class="hide-on-med-and-down">
-        {% include "search_box.html" %}
-    </div>
-    {{ super() }}
-    <div class="hide-on-large-only">
-        {% include "search_box.html" %}
-    </div>
-{% endblock %}
 {% block dropdown_title %}
 Biblioteka muzyczna
 {% endblock %}

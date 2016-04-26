@@ -35,6 +35,9 @@
         </div>
         <div class="col s12 m12 l3">
             {% block menu %}
+            <div class="hide-on-med-and-down">
+                {% include "search_box.html" %}
+            </div>
             {% set active_page = active_page|default('index') -%}
             <div class="collection hide-on-small-only">
                 {% for href, id, caption in navigation_bar %}
@@ -51,6 +54,9 @@
                 </ul>
                 <a class="btn dropdown-button" href="#!" data-activates="dropdown2" style="width:100%;margin-top:10px;margin-bottom:10px;">{% block dropdown_title %}{% endblock %}<i class="mdi-navigation-arrow-drop-down right"></i></a>
             </span>
+            <div class="hide-on-large-only">
+                {% include "search_box.html" %}
+            </div>
             {% endblock %}
             <div class="card-panel grey white-text center-align hide-on-med-and-down">
                 sMusic-www v{{ version }}
