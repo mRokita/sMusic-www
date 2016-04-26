@@ -19,7 +19,7 @@ Administracja
 {% endblock %}
 {% block main %}
     {% block page_body %}
-    <div class="row card-panel white">
+    <div class="row card-panel grey">
         <nav>
             <div class="nav-wrapper">
                 {% block main_menu %}
@@ -44,8 +44,9 @@ Administracja
 
       {# store the jinja2 context for form_rules rendering logic #}
       {% set render_ctx = h.resolve_ctx() %}
-
+        <div class="row card-panel white">
       {% block body %}{% endblock %}
+        </div>
     </div>
     {% endblock %}
 
