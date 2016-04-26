@@ -48,12 +48,11 @@
             </li>
             {% endif %}
 
-            {% if search_supported %}
-            <li>
-                {{ model_layout.search_form() }}
-            </li>
-            {% endif %}
+
         </ul>
+        {% if search_supported %}
+                {{ model_layout.search_form() }}
+        {% endif %}
     </div>
 </nav>
     {% endblock %}
