@@ -3,13 +3,13 @@ from flask import request, render_template, redirect, Response, stream_with_cont
 import json
 import re
 from urllib import urlopen
-from templating import render_template_with_args
 from shared import app, db
 from access_control import admin_perm, library_browse_perm, music_control_perm, upload_perm
 import access_control
 import config
 import radio_utils
 import upload
+from __init__ import __version__
 
 ALBUM_ART_URL = "http://www.slothradio.com/covers/?adv=0&artist={}&album={}"
 PATTERN_ALBUM_ART = re.compile("\\<div class\\=\\\"album0\\\"\\>\\<img src\\=\\\"(.*?)\\\"")
@@ -35,7 +35,7 @@ def inject_navigation_bar_data():
         navigation_bar.append(('/upload/', 'upload', u'Dodawanie utworów'))
     if admin_perm.can():
         navigation_bar.append(('/admin/', 'admin', u'Administracja'))
-    return dict(navigation_bar=navigation_bar)
+    return dict(navigation_bar=navigation_bar, version=__version__)
 
 
 @app.before_first_request
@@ -53,32 +53,32 @@ def fix_chars(string):
 
 @app.route('/')
 def ui_player():
-    return render_template_with_args("player.html")
+    return render_template("player.html")
 
 
 @app.route('/library/')
 @library_browse_perm.require(http_exception=403)
 def ui_library():
-    return render_template_with_args("library_artists.html")
+    return render_template("library_artists.html")
 
 
 @app.route('/search/')
 @library_browse_perm.require(http_exception=403)
 def ui_library_search():
     query = request.args["q"]
-    return render_template_with_args("library_search.html", query=query)
+    return render_template("library_search.html", query=query)
 
 
 @app.route('/library/<artist>/')
 @library_browse_perm.require(http_exception=403)
 def ui_library_artist(artist):
-    return render_template_with_args("library_artist_albums.html", artist=artist)
+    return render_template("library_artist_albums.html", artist=artist)
 
 
 @app.route('/library/<artist>/<album>/')
 @library_browse_perm.require(http_exception=403)
 def ui_library_artist_album(artist, album):
-    return render_template_with_args("library_artist_album_tracks.html", artist=artist, album=album)
+    return render_template("library_artist_album_tracks.html", artist=artist, album=album)
 
 
 @app.route('/api/v1/library/')

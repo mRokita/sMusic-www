@@ -6,7 +6,6 @@ from passlib.apps import custom_app_context as pwd_context
 from forms import UploadForm
 from shared import app
 from access_control import upload_perm
-from templating import render_template_with_args
 import radio_utils
 import json
 
@@ -30,7 +29,7 @@ def ui_upload():
         radio_utils.add_download("youtube-dl", form.url.data, artist, album, track)
         message = "Dodano link do kolejki pobierania"
 
-    return render_template_with_args('upload.html', form=form, message=message, error=error)
+    return render_template('upload.html', form=form, message=message, error=error)
 
 
 @app.route('/api/v1/current_download_queue/')
