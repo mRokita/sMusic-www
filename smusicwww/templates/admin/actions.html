@@ -1,6 +1,6 @@
 {% import 'admin/static.html' as admin_static with context %}
 
-{% macro dropdown(actions, btn_class='btn dropdown-button') -%}
+{% macro dropdown(actions, btn_class='dropdown-button') -%}
     <a class="{{ btn_class }}" data-activates="dropdown3" href="javascript:void(0)" data-beloworigin="true">{{ _gettext('With selected') }}<b class="caret"></b></a>
     <ul id="dropdown3" class="dropdown-content">
         {% for p in actions %}
