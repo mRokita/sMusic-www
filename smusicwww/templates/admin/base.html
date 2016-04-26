@@ -20,24 +20,23 @@ Administracja
 {% block main %}
     {% block page_body %}
     <div class="row card-panel white">
-      <nav class="navbar navbar-default" role="navigation">
-        <!-- navbar content -->
-        <div class="collapse navbar-collapse" id="admin-navbar-collapse">
-          {% block main_menu %}
-          <ul class="nav navbar-nav">
-            {{ layout.menu() }}
-          </ul>
-          {% endblock %}
+        <nav>
+            <div class="nav-wrapper">
+                {% block main_menu %}
+                <ul id="nav-mobile" class="left hide-on-med-and-down">
+                {{ layout.menu() }}
+                </ul>
+                {% endblock %}
 
-          {% block menu_links %}
-          <ul class="nav navbar-nav navbar-right">
-            {{ layout.menu_links() }}
-          </ul>
-          {% endblock %}
-          {% block access_control %}
-          {% endblock %}
-        </div>
-      </nav>
+                {% block menu_links %}
+                <ul id="nav-mobile" class="right hide-on-med-and-down">
+                {{ layout.menu_links() }}
+                </ul>
+                {% endblock %}
+                {% block access_control %}
+                {% endblock %}
+            </div>
+        </nav>
 
       {% block messages %}
       {{ layout.messages() }}
