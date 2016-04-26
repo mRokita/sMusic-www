@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl" xmlns="http://www.w3.org/1999/html">
 <head>
+    {% block head_main %}
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/static/materialize/css/materialize.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
@@ -8,6 +9,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>{% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    {% endblock %}
 </head>
 <body data-ng-app="sMusic" data-ng-controller="{% block controller %}{% endblock %}">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>

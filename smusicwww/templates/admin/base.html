@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import 'admin/layout.html' as layout with context -%}
+{% import 'admin/static.html' as admin_static with context %}
+{% block title %}{% if admin_view.category %}{{ admin_view.category }} - {% endif %}{{ admin_view.name }} - {{ admin_view.admin.name }}{% endblock %}
+{% set active_page = "admin" %}
+{% block dropdown_title %}
+Administracja
+{% endblock %}
+{% block head_main %}
+    {{ super() }}
+    {% block head_meta %}
+    {% endblock %}
+    {% block head_css %}
+    {% endblock %}
+    {% block head %}
+    {% endblock %}
+    {% block head_tail %}
+    {% endblock %}
+{% endblock %}
+{% block main %}
+    {% block page_body %}
+    <div class="row card-panel white">
+      <nav class="navbar navbar-default" role="navigation">
+        <!-- navbar content -->
+        <div class="collapse navbar-collapse" id="admin-navbar-collapse">
+          {% block main_menu %}
+          <ul class="nav navbar-nav">
+            {{ layout.menu() }}
+          </ul>
+          {% endblock %}
+
+          {% block menu_links %}
+          <ul class="nav navbar-nav navbar-right">
+            {{ layout.menu_links() }}
+          </ul>
+          {% endblock %}
+          {% block access_control %}
+          {% endblock %}
+        </div>
+      </nav>
+
+      {% block messages %}
+      {{ layout.messages() }}
+      {% endblock %}
+
+      {# store the jinja2 context for form_rules rendering logic #}
+      {% set render_ctx = h.resolve_ctx() %}
+
+      {% block body %}{% endblock %}
+    </div>
+    {% endblock %}
+
+    {% block tail_js %}
+    <script src="{{ admin_static.url(filename='vendor/moment.min.js', v='2.9.0') }}" type="text/javascript"></script>
+    <script src="{{ admin_static.url(filename='vendor/select2/select2.min.js', v='3.5.2') }}" type="text/javascript"></script>
+    {% endblock %}
+
+    {% block tail %}
+    {% endblock %}
+{% endblock %}
