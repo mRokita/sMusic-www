@@ -57,13 +57,45 @@ def ok(conn, addr, type, version, key=None):
         radio = conn
         logs.print_debug("%s:%s został zarejestrowany jako RADIO" % addr)
         return True
-    if type == "www" and addr[0] == "127.0.0.1":
-        logs.print_debug("%s:%s został zarejestrowany jako WWW" % addr)
-        return True
     return False
 
 
-class ClientHandler(Thread):
+class WwwHandler(Thread):
+
+    def __init__(self):
+        Thread.__init__(self)
+        self.daemon = True
+        self.__was_stopped = False
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def run(self):
+        global msgid
+        datadict = {}
+        self.sock.bind(("localhost", 3485))
+        while True:
+            data, address = self.sock.recvfrom(4096)
+            if address not in datadict:
+                datadict[address] = data
+            else:
+                datadict[address] += data
+
+            parsed_msg = PATTERN_MSG.findall(datadict[address])
+            if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
+                esc_string = parsed_msg[0][0]
+                msg = json.loads(un_escape(esc_string))
+                if radio:
+                    msgid += 1
+                    datacpy = dict(msg)
+                    datacpy["msgid"] = msgid
+                    queries[msgid] = address
+                    radio.write(escape(json.dumps(datacpy)))
+
+    def reply(self, mid, data):
+        self.sock.sendto(data, queries[mid])
+        del queries[mid]
+
+
+class RadioHandler(Thread):
     def __init__(self, conn, addr):
         Thread.__init__(self)
         self.daemon = True
@@ -88,13 +120,7 @@ class ClientHandler(Thread):
                     data = json.loads(un_escape(esc_string))
                     logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
                     if "request" in data:
-                        if self.conn != radio and radio and is_registered:
-                            msgid += 1
-                            datacpy = dict(data)
-                            datacpy["msgid"] = msgid
-                            queries[msgid] = self.conn
-                            radio.write(escape(json.dumps(datacpy)))
-                        elif self.conn == radio and not "msgid" in data or\
+                        if self.conn == radio and not "msgid" in data or\
                                 (not is_registered and "request" in data and data["request"] == "ok"):
                             datacpy = dict(data)
                             target = binds[datacpy["request"]]["target"]
@@ -107,10 +133,9 @@ class ClientHandler(Thread):
                                 is_registered = ret
                         elif self.conn == radio and "msgid" in data:
                             datacpy = dict(data)
-                            c = queries[datacpy["msgid"]]
-                            del queries[datacpy["msgid"]]
+                            mid = datacpy["msgid"]
                             del datacpy["msgid"]
-                            c.write(escape(json.dumps(datacpy)))
+                            www_handler.reply(mid, escape(json.dumps(datacpy)))
                 except ValueError as e:
                     print [un_escape(esc_string)]
                     print e
@@ -125,6 +150,9 @@ class ClientHandler(Thread):
 
 def main():
     global was_killed
+    global www_handler
+    www_handler = WwwHandler()
+    www_handler.start()
     bind_socket = socket.socket()
     bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bind_socket.bind((config.listen_host, config.listen_port))
@@ -139,7 +167,7 @@ def main():
                                        certfile=config.ssl_cert_file,
                                        keyfile=config.ssl_key_file)
 
-                handler = ClientHandler(conn, from_addr)
+                handler = RadioHandler(conn, from_addr)
                 handler.start()
             except ssl.SSLError:
                 pass
