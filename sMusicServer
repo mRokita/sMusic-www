@@ -8,6 +8,7 @@ import ssl
 from base64 import b64decode, b64encode
 import json
 import re
+import time
 from inspect import getargspec
 from threading import Thread
 from smusicwww import logs
@@ -16,9 +17,20 @@ from smusicwww import __version__
 
 msgid = 0
 binds = {}
-queries = {}
+queries = dict()
+requests = dict()
 radio = None
 PATTERN_MSG = re.compile("([ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=+/]*?)\n(.+)?", re.DOTALL)
+CACHED_FUNCTIONS = {
+    "get_artists": 3,
+    "get_albums": 3,
+    "get_tracks": 3,
+    "get_current_queue": 1,
+    "search": 1,
+    "status": 1,
+}
+
+cache = dict()
 
 
 def bind(function):
@@ -70,6 +82,7 @@ class WwwHandler(Thread):
 
     def run(self):
         global msgid
+        global cache
         datadict = {}
         self.sock.bind(("localhost", 3485))
         while True:
@@ -82,19 +95,43 @@ class WwwHandler(Thread):
             parsed_msg = PATTERN_MSG.findall(datadict[address])
             if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
                 esc_string = parsed_msg[0][0]
-                msg = json.loads(un_escape(esc_string))
+                msg_str = un_escape(esc_string)
+                msg = json.loads(msg_str)
                 if radio:
                     msgid += 1
-                    datacpy = dict(msg)
-                    datacpy["msgid"] = msgid
-                    queries[msgid] = address
-                    radio.write(escape(json.dumps(datacpy)))
+                    try:
+                        logs.print_error(str(msg["request"] in CACHED_FUNCTIONS))
+                    except:
+                        pass
+                    try:
+                        logs.print_error(str(msg_str in cache))
+                        logs.print_error(str([msg_str, cache]))
+                    except:
+                        pass
+                    try:
+                        logs.print_error(CACHED_FUNCTIONS[msg["request"]] >= (time.time()-cache[msg_str][1]))
+                    except:
+                        logs.print_error("Except")
+                    if msg["request"] in CACHED_FUNCTIONS\
+                            and msg_str in cache\
+                            and CACHED_FUNCTIONS[msg["request"]] >= (time.time()-cache[msg_str][1]):
+                        self.sock.sendto(cache[msg_str][0], address)
+                        logs.print_error("RETURNING FROM CACHE")
+                    else:
+                        logs.print_error("RETURNING FROM RADIO")
+                        datacpy = msg.copy()
+                        datacpy["msgid"] = msgid
+                        requests[msgid] = msg
+                        queries[msgid] = address
+                        radio.write(escape(json.dumps(datacpy)))
 
     def reply(self, mid, data):
+        if requests[mid]["request"] in CACHED_FUNCTIONS:
+            cache[json.dumps(requests[mid])] = (data, time.time())
         self.sock.sendto(data, queries[mid])
         del queries[mid]
 
-
+#czarny blues o cczwartej nad ranem
 class RadioHandler(Thread):
     def __init__(self, conn, addr):
         Thread.__init__(self)
