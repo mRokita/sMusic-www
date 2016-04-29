@@ -99,26 +99,11 @@ class WwwHandler(Thread):
                 msg = json.loads(msg_str)
                 if radio:
                     msgid += 1
-                    try:
-                        logs.print_error(str(msg["request"] in CACHED_FUNCTIONS))
-                    except:
-                        pass
-                    try:
-                        logs.print_error(str(msg_str in cache))
-                        logs.print_error(str([msg_str, cache]))
-                    except:
-                        pass
-                    try:
-                        logs.print_error(CACHED_FUNCTIONS[msg["request"]] >= (time.time()-cache[msg_str][1]))
-                    except:
-                        logs.print_error("Except")
                     if msg["request"] in CACHED_FUNCTIONS\
                             and msg_str in cache\
                             and CACHED_FUNCTIONS[msg["request"]] >= (time.time()-cache[msg_str][1]):
                         self.sock.sendto(cache[msg_str][0], address)
-                        logs.print_error("RETURNING FROM CACHE")
                     else:
-                        logs.print_error("RETURNING FROM RADIO")
                         datacpy = msg.copy()
                         datacpy["msgid"] = msgid
                         requests[msgid] = msg
@@ -131,7 +116,6 @@ class WwwHandler(Thread):
         self.sock.sendto(data, queries[mid])
         del queries[mid]
 
-#czarny blues o cczwartej nad ranem
 class RadioHandler(Thread):
     def __init__(self, conn, addr):
         Thread.__init__(self)
