@@ -22,6 +22,7 @@ if not found_config:
 
 listen_port = int(conf.get("Listen", "port"))
 listen_host = conf.get("Listen", "host")
+listen_udp_port = int(conf.get("Listen", "internal_port"))
 radio_key = conf.get("Security", "radio_key")
 ssl_cert_file = conf.get("Security", "ssl_cert_file")
 ssl_key_file = conf.get("Security", "ssl_key_file")

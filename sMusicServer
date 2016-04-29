@@ -84,8 +84,8 @@ class WwwHandler(Thread):
         global msgid
         global cache
         datadict = {}
-        self.sock.bind(("localhost", 3485))
-        while True:
+        self.sock.bind(("localhost", config.listen_udp_port))
+        while not self.__was_stopped and not was_killed:
             data, address = self.sock.recvfrom(4096)
             if address not in datadict:
                 datadict[address] = data
@@ -116,7 +116,12 @@ class WwwHandler(Thread):
         self.sock.sendto(data, queries[mid])
         del queries[mid]
 
+    def stop(self):
+        self.__was_stopped = True
+
+
 class RadioHandler(Thread):
+
     def __init__(self, conn, addr):
         Thread.__init__(self)
         self.daemon = True
