@@ -137,7 +137,7 @@
                                 {%- endif -%}
                             {%- endif -%}
                             {%- if admin_view.can_delete -%}
-                            <form class="icon" action="{{ get_url('.delete_view') }}">
+                            <form class="icon" method="POST" action="{{ get_url('.delete_view') }}">
                                 {{ delete_form.id(value=get_pk_value(row)) }}
                                 {{ delete_form.url(value=return_url) }}
                                 {% if delete_form.csrf_token %}
