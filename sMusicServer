@@ -138,16 +138,15 @@ class ClientHandler(Thread):
         buff = ""
         while msg and not self.__was_stopped and not was_killed:
             buff += msg
-            parsed_msg = PATTERN_MSG.findall(buff)
-            if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
+            if '\n' in msg:
+                esc_string = buff[:buff.index('\n')]
+                buff = buff[buff.index('\n') + 1:]
                 if self.type == RADIO_TYPE:
                     if self.object.last_seen is None or self.object.last_seen + aktualizacja_last_seen < datetime.datetime.now():
                         self.object.last_seen = datetime.datetime.now()
                         print self.object.last_seen
                         session.add(self.object)
                         session.commit()
-                buff = parsed_msg[0][1]
-                esc_string = parsed_msg[0][0]
                 try:
                     data = json.loads(un_escape(esc_string))
                     logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
