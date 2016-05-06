@@ -94,31 +94,6 @@ def un_escape(msg):
     return b64decode(msg)
 
 
-def ok(conn, addr, type, version, key=None):
-    if version != __version__:
-        conn.send(escape(json.dumps({u"request": u"error",
-                                     u"type": u"incompatibleVersions",
-                                     u"cat": u"=^..^=",
-                                     u"comment": u"Niekompatybilne wersje komponentow systemu."})))
-        return UNAUTHORIZED_TYPE, None
-    if type == "radio":
-        radio = session.query(Radio).filter_by(access_key=key).first()
-        if radio is not None:
-            radios_connections[radio.id] = conn
-            logs.print_debug("%s:%s został zarejestrowany jako RADIO o id=%s" % (addr[0], addr[1], str(radio.id)))
-            return RADIO_TYPE, radio
-        else:
-            conn.send(escape(json.dumps({u"request": u"error",
-                                         u"type": u"wrongKey",
-                                         u"cat": u"=^..^=",
-                                         u"comment": u"Podany klucz radia jest bledny"})))
-            return UNAUTHORIZED_TYPE, None
-    if type == "www" and addr[0] == "127.0.0.1":
-        logs.print_debug("%s:%s został zarejestrowany jako WWW" % addr)
-        return WWW_TYPE, None
-    return UNAUTHORIZED_TYPE, None
-
-
 class ClientHandler(Thread):
     def __init__(self, conn, addr):
         Thread.__init__(self)
@@ -128,9 +103,9 @@ class ClientHandler(Thread):
         self.addr = addr
         self.type = UNAUTHORIZED_TYPE
         self.object = None
+        self.id = -1
 
     def run(self):
-        global msgid
         global radios_connections
         logs.print_debug("%s:%s połączył się" % self.addr)
         self.conn.write(escape(json.dumps({"request": "type"})))
@@ -161,14 +136,10 @@ class ClientHandler(Thread):
                                     if send_response:
                                         self.conn.send(escape(json.dumps(ret)))
                                 else:
-                                    msgid += 1
-                                    datacpy = dict(data)
-                                    datacpy["msgid"] = msgid
-                                    del datacpy["radio"]
-                                    queries[msgid] = self.conn
                                     if data["radio"] in radios_connections:
                                         radio = radios_connections[data["radio"]]
-                                        radio.write(escape(json.dumps(datacpy)))
+                                        del data["radio"]
+                                        radio.send_request(data, self.send_request)
                                     else:
                                         self.conn.send(escape(json.dumps({u"request": u"error",
                                                                           u"type": u"radioNotConnected",
@@ -188,17 +159,17 @@ class ClientHandler(Thread):
                                 del datacpy["request"]
                                 ret = target(self.conn, self.addr, **datacpy)
                                 if send_response:
-                                    self.conn.send(escape(json.dumps(ret)))
+                                    self.send_request(ret)
                             else:
                                 datacpy = dict(data)
-                                c = queries[datacpy["msgid"]]
+                                back_ref = queries[datacpy["msgid"]]
                                 del queries[datacpy["msgid"]]
                                 del datacpy["msgid"]
-                                c.write(escape(json.dumps(datacpy)))
+                                back_ref(datacpy)
                         elif data["request"] == "ok":
                             datacpy = dict(data)
                             del datacpy["request"]
-                            self.type, self.object = ok(self.conn, self.addr, **datacpy)
+                            self.type, self.object = self.authenticate(**datacpy)
 
                 except ValueError as e:
                     print [un_escape(esc_string)]
@@ -207,12 +178,53 @@ class ClientHandler(Thread):
             msg = self.conn.read()
         self.conn.close()
         if self.type == RADIO_TYPE:
-            radios_connections = {key: value for key, value in radios_connections.items()
-                                  if value is not self.conn}
+            del radios_connections[self.id]
         logs.print_debug("%s:%s rozłączył się" % self.addr)
+
+    def authenticate(self, type, version, key=None):
+        if version != __version__:
+            self.conn.send(escape(json.dumps({u"request": u"error",
+                                              u"type": u"incompatibleVersions",
+                                              u"cat": u"=^..^=",
+                                              u"comment": u"Niekompatybilne wersje komponentow systemu."})))
+            return UNAUTHORIZED_TYPE, None
+        if type == "radio":
+            radio = session.query(Radio).filter_by(access_key=key).first()
+            if radio is not None:
+                radios_connections[radio.id] = self
+                self.id = radio.id
+                logs.print_debug("%s:%s został zarejestrowany jako RADIO o id=%s" % (self.addr[0], self.addr[1], str(radio.id)))
+                return RADIO_TYPE, radio
+            else:
+                self.conn.send(escape(json.dumps({u"request": u"error",
+                                                  u"type": u"wrongKey",
+                                                  u"cat": u"=^..^=",
+                                                  u"comment": u"Podany klucz radia jest bledny"})))
+                return UNAUTHORIZED_TYPE, None
+        if type == "www" and self.addr[0] == "127.0.0.1":
+            logs.print_debug("%s:%s został zarejestrowany jako WWW" % self.addr)
+            return WWW_TYPE, None
+        return UNAUTHORIZED_TYPE, None
 
     def stop(self):
         self.__was_stopped = True
+
+    def send_request(self, req, back_ref = None):
+        global msgid
+        reqcpy = dict(req)
+        if req["request"] not in ["ok", "error"] and back_ref is not None:
+            reqcpy["msgid"] = msgid
+            queries[msgid] = back_ref
+            msgid += 1
+        try:
+            self.conn.send(escape(json.dumps(reqcpy)))
+        except socket.error, exc:
+            print "Caught exception socket.error : %s" % exc
+            if back_ref is not None:
+                back_ref({u"request": u"error",
+                          u"type": u"connectionError",
+                          u"cat": u"=^..^=",
+                          u"comment": u"socket.error exception - %s" % exc})
 
 
 def main():
