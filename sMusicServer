@@ -148,7 +148,7 @@ class ClientHandler(Thread):
                                     del datacpy["request"]
                                     ret = www_comm.binds[data["request"]]["target"](**datacpy)
                                     if send_response:
-                                        self.conn.send(escape(json.dumps(ret)))
+                                        self.send_request(ret)
                                 else:
                                     if data["radio"] in radios_connections:
                                         radio = radios_connections[data["radio"]]
