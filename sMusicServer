@@ -38,11 +38,12 @@ class Radio(Base):
     access_key = Column(String(32), unique=True)
     last_seen = Column(DateTime())
 
+
 # From writeonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
 # Based on code by Yannick Gingras
 
 
-def abort_ro(*args,**kwargs):
+def abort_ro(*args, **kwargs):
     ''' the terrible consequences for trying
         to flush to the db '''
     print "No writing allowed, tsk!  We're telling mom!"
@@ -50,14 +51,15 @@ def abort_ro(*args,**kwargs):
 
 
 def db_setup(connstring='sqlite:///:memory:',
-               echo=False, readonly=True):
+             echo=False, readonly=True):
     engine = create_engine(connstring, echo=echo)
     Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = Session()
     if readonly:
-        session.flush = abort_ro   # now it won't flush!
+        session.flush = abort_ro  # now it won't flush!
 
     return session, engine
+
 
 # end from riteonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
 
@@ -72,7 +74,7 @@ class Binder():
         argspec = getargspec(function)
         args = argspec[0]
         if argspec[-1]:
-            req_args = args[:len(argspec[-1])-1]
+            req_args = args[:len(argspec[-1]) - 1]
         else:
             req_args = args
         self.binds[function.__name__] = {
@@ -82,16 +84,28 @@ class Binder():
         }
         return function
 
+
 radio_comm = Binder()
 www_comm = Binder()
 
 
 def escape(msg):
-    return "\t"+b64encode(msg)+"\n"
+    return "\t" + b64encode(msg) + "\n"
 
 
 def un_escape(msg):
     return b64decode(msg)
+
+
+def error_formater(e_type, comment, other=None):
+    if other is None:
+        other = {}
+    ret = {u"request": u"error",
+           u"type": e_type,
+           u"cat": u"=^..^=",
+           u"comment": comment}
+    ret.update(other)
+    return ret
 
 
 class ClientHandler(Thread):
@@ -141,16 +155,9 @@ class ClientHandler(Thread):
                                         del data["radio"]
                                         radio.send_request(data, self.send_request)
                                     else:
-                                        self.conn.send(escape(json.dumps({u"request": u"error",
-                                                                          u"type": u"radioNotConnected",
-                                                                          u"cat": u"=^..^=",
-                                                                          u"comment": u"Radio o id %s nie jest podlaczone" % data["radio"]})))
+                                        self.send_request(error_formater(u"radioNotConnected", u"Radio o id %s nie jest podlaczone" % data["radio"]))
                             else:
-                                self.conn.send(escape(json.dumps({u"request": u"error",
-                                                                  u"type": u"missingParameter",
-                                                                  u"parameter": u"radio",
-                                                                  u"cat": u"=^..^=",
-                                                                  u"comment": u"Brakuje patametrus radio"})))
+                                self.send_request(error_formater(u"missingParameter", u"Brakuje patametrus radio", {u"parameter": u"radio"}))
                         elif self.type == RADIO_TYPE:
                             if "msgid" not in data:
                                 datacpy = dict(data)
@@ -183,23 +190,18 @@ class ClientHandler(Thread):
 
     def authenticate(self, type, version, key=None):
         if version != __version__:
-            self.conn.send(escape(json.dumps({u"request": u"error",
-                                              u"type": u"incompatibleVersions",
-                                              u"cat": u"=^..^=",
-                                              u"comment": u"Niekompatybilne wersje komponentow systemu."})))
+            self.send_request(error_formater(u"incompatibleVersions", u"Niekompatybilne wersje komponentow systemu."))
             return UNAUTHORIZED_TYPE, None
         if type == "radio":
             radio = session.query(Radio).filter_by(access_key=key).first()
             if radio is not None:
                 radios_connections[radio.id] = self
                 self.id = radio.id
-                logs.print_debug("%s:%s został zarejestrowany jako RADIO o id=%s" % (self.addr[0], self.addr[1], str(radio.id)))
+                logs.print_debug(
+                    "%s:%s został zarejestrowany jako RADIO o id=%s" % (self.addr[0], self.addr[1], str(radio.id)))
                 return RADIO_TYPE, radio
             else:
-                self.conn.send(escape(json.dumps({u"request": u"error",
-                                                  u"type": u"wrongKey",
-                                                  u"cat": u"=^..^=",
-                                                  u"comment": u"Podany klucz radia jest bledny"})))
+                self.send_request(error_formater(u"wrongKey", u"Podany klucz radia jest bledny"))
                 return UNAUTHORIZED_TYPE, None
         if type == "www" and self.addr[0] == "127.0.0.1":
             logs.print_debug("%s:%s został zarejestrowany jako WWW" % self.addr)
@@ -209,8 +211,9 @@ class ClientHandler(Thread):
     def stop(self):
         self.__was_stopped = True
 
-    def send_request(self, req, back_ref = None):
+    def send_request(self, req, back_ref=None):
         global msgid
+        print req
         reqcpy = dict(req)
         if req["request"] not in ["ok", "error"] and back_ref is not None:
             reqcpy["msgid"] = msgid
@@ -221,10 +224,7 @@ class ClientHandler(Thread):
         except socket.error, exc:
             print "Caught exception socket.error : %s" % exc
             if back_ref is not None:
-                back_ref({u"request": u"error",
-                          u"type": u"connectionError",
-                          u"cat": u"=^..^=",
-                          u"comment": u"socket.error exception - %s" % exc})
+                back_ref(error_formater(u"connectionError", u"socket.error exception - %s" % exc))
 
 
 def main():
@@ -257,8 +257,8 @@ def main():
 if __name__ == "__main__":
     logs.setup_logging()
     logs.print_info("\n+---------------------------------------------+\n|" +
-          ("sMusic-www/sMusicServer v{}".format(__version__).center(45, " "))+"|\n|" +
-          "https://github.com/mRokita/sMusic-www".center(45, " ") +
-          "|\n+---------------------------------------------+\n")
+                    ("sMusic-www/sMusicServer v{}".format(__version__).center(45, " ")) + "|\n|" +
+                    "https://github.com/mRokita/sMusic-www".center(45, " ") +
+                    "|\n+---------------------------------------------+\n")
     was_killed = False
     main()
