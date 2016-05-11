@@ -100,6 +100,11 @@ def ok(conn, addr):
     pass
 
 
+@www_comm.bind()
+def list_connected():
+    return {"request": "ok", "radios_list": radios_connections.keys()}
+
+
 def escape(msg):
     return "\t" + b64encode(msg) + "\n"
 
@@ -153,6 +158,7 @@ class ClientHandler(Thread):
                                     datacpy = dict(data)
                                     send_response = datacpy["request"] != "ok"
                                     del datacpy["request"]
+                                    del datacpy["radio"]
                                     ret = www_comm.binds[data["request"]]["target"](**datacpy)
                                     if send_response:
                                         self.send_request(ret)

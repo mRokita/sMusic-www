@@ -139,6 +139,21 @@ class Radio(db.Model):
     def download_status(self):
         return self.send_request({"request": "download_status"})
 
+    def is_connected(self):
+        return self.id in connected_radios_ids()
+
+
+def connected_radios_ids():
+    return send_for_result({"request": "list_connected", "radio": -1})["radios_list"]
+
+
+def connected_radios():
+    radios_ids = connected_radios_ids()
+    if len(radios_ids) > 0:
+        return Radio.query.filter(Radio.id.in_(radios_ids)).all()
+    else:
+        return []
+
 
 @app.route('/api/v1/change_radio/<radio_id>')
 @radio_change_perm.require(http_exception=403)
