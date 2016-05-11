@@ -17,12 +17,16 @@ from sqlalchemy import Integer, Column, String, create_engine, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
+import time
 
 UNAUTHORIZED_TYPE = 0
 RADIO_TYPE = 1
 WWW_TYPE = 2
 
 aktualizacja_last_seen = datetime.timedelta(seconds=5)
+timeout_time = datetime.timedelta(seconds=30)
+ping_frequency = datetime.timedelta(seconds=5)
+
 msgid = 0
 queries = {}
 radios_connections = {}
@@ -70,23 +74,30 @@ class Binder():
     def __init__(self):
         self.binds = {}
 
-    def bind(self, function):
-        argspec = getargspec(function)
-        args = argspec[0]
-        if argspec[-1]:
-            req_args = args[:len(argspec[-1]) - 1]
-        else:
-            req_args = args
-        self.binds[function.__name__] = {
-            "target": function,
-            "reqired_args": req_args,
-            "args": args
-        }
-        return function
+    def bind(self):
+        def bind(function):
+            argspec = getargspec(function)
+            args = argspec[0]
+            if argspec[-1]:
+                req_args = args[:len(argspec[-1]) - 1]
+            else:
+                req_args = args
+            self.binds[function.__name__] = {
+                "target": function,
+                "reqired_args": req_args,
+                "args": args
+            }
+            return function
+        return bind
 
 
 radio_comm = Binder()
 www_comm = Binder()
+
+
+@radio_comm.bind()
+def ok(conn, addr):
+    pass
 
 
 def escape(msg):
@@ -131,11 +142,7 @@ class ClientHandler(Thread):
                 esc_string = buff[:buff.index('\n')]
                 buff = buff[buff.index('\n') + 1:]
                 if self.type == RADIO_TYPE:
-                    if self.object.last_seen is None or self.object.last_seen + aktualizacja_last_seen < datetime.datetime.now():
-                        self.object.last_seen = datetime.datetime.now()
-                        print self.object.last_seen
-                        session.add(self.object)
-                        session.commit()
+                    self.__renew_last_seen()
                 try:
                     data = json.loads(un_escape(esc_string))
                     logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
@@ -176,22 +183,27 @@ class ClientHandler(Thread):
                         elif data["request"] == "ok":
                             datacpy = dict(data)
                             del datacpy["request"]
-                            self.type, self.object = self.authenticate(**datacpy)
+                            self.authenticate(**datacpy)
 
                 except ValueError as e:
                     print [un_escape(esc_string)]
                     print e
-
-            msg = self.conn.read()
-        self.conn.close()
+            try:
+                msg = self.conn.read()
+            except (socket.error, ValueError) as e:
+                if not self.__was_stopped:
+                    logs.print_warning("%s:%s - socket.error: %s" % (self.addr + (str(e),)))
+                    self.stop()
         if self.type == RADIO_TYPE:
             del radios_connections[self.id]
-        logs.print_debug("%s:%s rozłączył się" % self.addr)
+        logs.print_debug("%s:%s zakończone obsługę klienta" % self.addr)
+        self.stop()
 
     def authenticate(self, type, version, key=None):
         if version != __version__:
             self.send_request(error_formater(u"incompatibleVersions", u"Niekompatybilne wersje komponentow systemu."))
-            return UNAUTHORIZED_TYPE, None
+            self.type = UNAUTHORIZED_TYPE
+            self.object = None
         if type == "radio":
             radio = session.query(Radio).filter_by(access_key=key).first()
             if radio is not None:
@@ -199,21 +211,24 @@ class ClientHandler(Thread):
                 self.id = radio.id
                 logs.print_debug(
                     "%s:%s został zarejestrowany jako RADIO o id=%s" % (self.addr[0], self.addr[1], str(radio.id)))
-                return RADIO_TYPE, radio
+                self.type = RADIO_TYPE
+                self.object = radio
+                self.__renew_last_seen()
+                Thread(target=self.__pinger).start()
             else:
                 self.send_request(error_formater(u"wrongKey", u"Podany klucz radia jest bledny"))
-                return UNAUTHORIZED_TYPE, None
         if type == "www" and self.addr[0] == "127.0.0.1":
             logs.print_debug("%s:%s został zarejestrowany jako WWW" % self.addr)
-            return WWW_TYPE, None
-        return UNAUTHORIZED_TYPE, None
+            self.type = WWW_TYPE
+            self.object = None
 
     def stop(self):
+        logs.print_debug("%s:%s rozłączanie klienta" % self.addr)
         self.__was_stopped = True
+        self.conn.close()
 
     def send_request(self, req, back_ref=None):
         global msgid
-        print req
         reqcpy = dict(req)
         if req["request"] not in ["ok", "error"] and back_ref is not None:
             reqcpy["msgid"] = msgid
@@ -225,6 +240,21 @@ class ClientHandler(Thread):
             print "Caught exception socket.error : %s" % exc
             if back_ref is not None:
                 back_ref(error_formater(u"connectionError", u"socket.error exception - %s" % exc))
+
+    def __pinger(self):
+        while not self.__was_stopped:
+            if datetime.datetime.now() - self.object.last_seen > timeout_time:
+                logs.print_debug("%s:%s przekroczyl czas oczekiwania na odpowiedz" % self.addr)
+                self.stop()
+            elif datetime.datetime.now() - self.object.last_seen > ping_frequency:
+                self.send_request({"request": "ping"})
+            time.sleep(1)
+
+    def __renew_last_seen(self):
+        if self.object.last_seen is None or self.object.last_seen + aktualizacja_last_seen < datetime.datetime.now():
+            self.object.last_seen = datetime.datetime.now()
+            session.add(self.object)
+            session.commit()
 
 
 def main():
