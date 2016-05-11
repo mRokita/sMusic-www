@@ -6,9 +6,8 @@ from passlib.apps import custom_app_context as pwd_context
 from forms import UploadForm
 from shared import app
 from access_control import upload_perm
-import radio_utils
 import json
-
+from flask_login import current_user
 
 @app.route('/upload/', methods=['GET', 'POST'])
 @upload_perm.require(http_exception=403)
@@ -26,7 +25,7 @@ def ui_upload():
         track = None
         if form.track.data != "":
             track = form.track.data
-        radio_utils.add_download("youtube-dl", form.url.data, artist, album, track)
+        current_user.radio.add_download("youtube-dl", form.url.data, artist, album, track)
         message = "Dodano link do kolejki pobierania"
 
     return render_template('upload.html', form=form, message=message, error=error)
@@ -35,16 +34,16 @@ def ui_upload():
 @app.route('/api/v1/current_download_queue/')
 @upload_perm.require(http_exception=403)
 def api_current_download_queue():
-    return json.dumps(radio_utils.get_current_dowanlod_queue())
+    return json.dumps(current_user.radio.get_current_dowanlod_queue())
 
 
 @app.route('/api/v1/clear_download_queue/')
 @upload_perm.require(http_exception=403)
 def api_clear_download_queue():
-    return json.dumps(radio_utils.clear_download_queue())
+    return json.dumps(current_user.radio.clear_download_queue())
 
 
 @app.route('/api/v1/download_status/')
 @upload_perm.require(http_exception=403)
 def api_download_status():
-    return json.dumps(radio_utils.download_status())
+    return json.dumps(current_user.radio.download_status())

@@ -11,6 +11,7 @@ import flask_admin
 from flask_admin.contrib import sqla
 import ldap3
 from passlib.apps import custom_app_context as pwd_context
+
 from forms import LoginForm
 from shared import app, db
 from utils import get_or_create, secure_random_string_generator
@@ -19,9 +20,23 @@ import base64
 import hashlib
 import json
 from wtforms.fields import PasswordField
+from flask.ext.login import AnonymousUserMixin
+
 
 NORMAL_LOGIN = 0
 API_LOGIN = 1
+
+
+principals = Principal(app)
+admin_perm = Permission(RoleNeed("admin"))
+music_control_perm = Permission(RoleNeed("dj"))
+library_browse_perm = Permission(RoleNeed("ANY"))
+upload_perm = Permission(RoleNeed("dj"))
+radio_change_perm = Permission(RoleNeed("super_admin"))
+
+
+from radio_management import Radio
+
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -47,6 +62,8 @@ class User(db.Model, UserMixin):
     display_name = db.Column(db.String(255))
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    radio_id = db.Column(db.Integer, db.ForeignKey('radio.id'))
+    radio = db.relationship('Radio', back_populates='users')
     comment = db.Column(db.String(255))
     api_key = db.Column(db.String(255))
     login_type = NORMAL_LOGIN
@@ -66,6 +83,16 @@ class User(db.Model, UserMixin):
     def __str__(self):
         return "%s - %s - %s" % (self.id, self.login, self.display_name)
 
+
+class Anonymous(AnonymousUserMixin):
+    def __init__(self):
+        self.radio_id = request.cookies.get('radio', 1)
+        self.radio = Radio.query.get(self.radio_id)
+        if self.radio is None:
+            self.radio_id = 1
+            self.radio = Radio.query.get(1)
+
+
 api_allowed_roles = ["ANY", "dj"]
 
 principals = Principal(app)
@@ -81,6 +108,7 @@ login_manager.needs_refresh_message = (
     u"To protect your account, please reauthenticate to access this page."
 )
 login_manager.needs_refresh_message_category = "info"
+login_manager.anonymous_user = Anonymous
 
 
 class MyAdminIndexView(AdminIndexView):
@@ -101,7 +129,7 @@ class UserAdmin(AdminBaseModelView):
     column_exclude_list = ['password']
     form_excluded_columns = ('password',)
     column_display_pk = False
-    column_searchable_list = ('login', 'display_name')
+    column_searchable_list = ('login', 'display_name', 'radio_id')
 
     def scaffold_form(self):
         form_class = super(UserAdmin, self).scaffold_form()
@@ -123,6 +151,16 @@ class RoleAdmin(AdminBaseModelView):
 
 
 admin.add_view(RoleAdmin(Role, db.session))
+
+
+class RadioAdmin(AdminBaseModelView):
+    form_columns = ['name', 'comment', 'users']
+    column_list = ('name', 'comment', 'access_key', 'last_seen')
+    form_excluded_columns = ('password',)
+    column_searchable_list = ('name',)
+
+
+admin.add_view(RadioAdmin(Radio, db.session))
 
 
 def check_ldap_credentials(username, password):
@@ -157,9 +195,11 @@ def check_ldap_credentials(username, password):
 def fill_database():
     admin_role = get_or_create(db.session, Role, name='admin')
     dj_role = get_or_create(db.session, Role, name='dj')
+    default_radio = get_or_create(db.session, Radio, name='default')
     admin_user = get_or_create(db.session, User, login=config.admin_login)
     admin_user.password = pwd_context.encrypt(config.admin_password)
     admin_user.roles = [admin_role, dj_role]
+    admin_user.radio = default_radio
     admin_user.is_active = True
     admin_user.comment = "admin z config.py, zawsze posiada haslo z config.py"
 
