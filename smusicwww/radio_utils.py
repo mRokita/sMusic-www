@@ -17,15 +17,19 @@ def un_escape(msg):
 
 
 def send_for_result(dct):
+    conn = ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
     timeout = 2
     if dct["request"] in ["get_artists", "get_tracks", "get_albums"]:
         timeout = 6
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.sendto(escape(json.dumps(dct)), ("localhost", 3485))
+    conn.settimeout(timeout)
+    conn.connect(("127.0.0.1", config.listen_port))
+    conn.read()
+    conn.send(escape(json.dumps({"request": "ok", "type": "www", "version": __version__})))
+    conn.send(escape(json.dumps(dct)))
     buff = ""
     while len(buff) == 0 or not buff[-1] == "\n":
-        data, server = sock.recvfrom(4096)
-        buff += data
+        buff += conn.read()
+    conn.close()
     return json.loads(b64decode(buff[:-1]))
 
 

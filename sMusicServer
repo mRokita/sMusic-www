@@ -8,7 +8,6 @@ import ssl
 from base64 import b64decode, b64encode
 import json
 import re
-import time
 from inspect import getargspec
 from threading import Thread
 from smusicwww import logs
@@ -17,20 +16,9 @@ from smusicwww import __version__
 
 msgid = 0
 binds = {}
-queries = dict()
-requests = dict()
+queries = {}
 radio = None
 PATTERN_MSG = re.compile("([ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=+/]*?)\n(.+)?", re.DOTALL)
-CACHED_FUNCTIONS = {
-    "get_artists": 3,
-    "get_albums": 3,
-    "get_tracks": 3,
-    "get_current_queue": 1,
-    "search": 1,
-    "status": 1,
-}
-
-cache = dict()
 
 
 def bind(function):
@@ -69,59 +57,13 @@ def ok(conn, addr, type, version, key=None):
         radio = conn
         logs.print_debug("%s:%s został zarejestrowany jako RADIO" % addr)
         return True
+    if type == "www" and addr[0] == "127.0.0.1":
+        logs.print_debug("%s:%s został zarejestrowany jako WWW" % addr)
+        return True
     return False
 
 
-class WwwHandler(Thread):
-
-    def __init__(self):
-        Thread.__init__(self)
-        self.daemon = True
-        self.__was_stopped = False
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    def run(self):
-        global msgid
-        global cache
-        datadict = {}
-        self.sock.bind(("localhost", config.listen_udp_port))
-        while not self.__was_stopped and not was_killed:
-            data, address = self.sock.recvfrom(4096)
-            if address not in datadict:
-                datadict[address] = data
-            else:
-                datadict[address] += data
-
-            parsed_msg = PATTERN_MSG.findall(datadict[address])
-            if len(parsed_msg) == 1 and len(parsed_msg[0]) == 2:
-                esc_string = parsed_msg[0][0]
-                msg_str = un_escape(esc_string)
-                msg = json.loads(msg_str)
-                if radio:
-                    msgid += 1
-                    if msg["request"] in CACHED_FUNCTIONS\
-                            and msg_str in cache\
-                            and CACHED_FUNCTIONS[msg["request"]] >= (time.time()-cache[msg_str][1]):
-                        self.sock.sendto(cache[msg_str][0], address)
-                    else:
-                        datacpy = msg.copy()
-                        datacpy["msgid"] = msgid
-                        requests[msgid] = msg
-                        queries[msgid] = address
-                        radio.write(escape(json.dumps(datacpy)))
-
-    def reply(self, mid, data):
-        if requests[mid]["request"] in CACHED_FUNCTIONS:
-            cache[json.dumps(requests[mid])] = (data, time.time())
-        self.sock.sendto(data, queries[mid])
-        del queries[mid]
-
-    def stop(self):
-        self.__was_stopped = True
-
-
-class RadioHandler(Thread):
-
+class ClientHandler(Thread):
     def __init__(self, conn, addr):
         Thread.__init__(self)
         self.daemon = True
@@ -146,7 +88,13 @@ class RadioHandler(Thread):
                     data = json.loads(un_escape(esc_string))
                     logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
                     if "request" in data:
-                        if self.conn == radio and not "msgid" in data or\
+                        if self.conn != radio and radio and is_registered:
+                            msgid += 1
+                            datacpy = dict(data)
+                            datacpy["msgid"] = msgid
+                            queries[msgid] = self.conn
+                            radio.write(escape(json.dumps(datacpy)))
+                        elif self.conn == radio and not "msgid" in data or\
                                 (not is_registered and "request" in data and data["request"] == "ok"):
                             datacpy = dict(data)
                             target = binds[datacpy["request"]]["target"]
@@ -159,9 +107,10 @@ class RadioHandler(Thread):
                                 is_registered = ret
                         elif self.conn == radio and "msgid" in data:
                             datacpy = dict(data)
-                            mid = datacpy["msgid"]
+                            c = queries[datacpy["msgid"]]
+                            del queries[datacpy["msgid"]]
                             del datacpy["msgid"]
-                            www_handler.reply(mid, escape(json.dumps(datacpy)))
+                            c.write(escape(json.dumps(datacpy)))
                 except ValueError as e:
                     print [un_escape(esc_string)]
                     print e
@@ -176,9 +125,6 @@ class RadioHandler(Thread):
 
 def main():
     global was_killed
-    global www_handler
-    www_handler = WwwHandler()
-    www_handler.start()
     bind_socket = socket.socket()
     bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bind_socket.bind((config.listen_host, config.listen_port))
@@ -193,7 +139,7 @@ def main():
                                        certfile=config.ssl_cert_file,
                                        keyfile=config.ssl_key_file)
 
-                handler = RadioHandler(conn, from_addr)
+                handler = ClientHandler(conn, from_addr)
                 handler.start()
             except ssl.SSLError:
                 pass
