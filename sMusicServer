@@ -56,7 +56,7 @@ def abort_ro(*args, **kwargs):
 
 def db_setup(connstring='sqlite:///:memory:',
              echo=False, readonly=True):
-    engine = create_engine(connstring, echo=echo)
+    engine = create_engine(connstring, echo=echo, pool_recycle=600)
     Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = Session()
     if readonly:
