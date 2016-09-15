@@ -7,7 +7,6 @@ import socket
 import ssl
 from base64 import b64decode, b64encode
 import json
-import re
 from inspect import getargspec
 from threading import Thread
 from smusicwww import logs
@@ -22,8 +21,11 @@ import time
 UNAUTHORIZED_TYPE = 0
 RADIO_TYPE = 1
 WWW_TYPE = 2
+__protocol_version__ = "0.1.9"
 
-msgid = 0
+REQ_WWW_TO_SERVER_RADIO_ID = -1
+
+next_msgid = 0
 queries = {}
 radios_connections = {}
 
@@ -37,35 +39,12 @@ class Radio(Base):
     access_key = Column(String(32), unique=True)
     last_seen = Column(DateTime())
 
-
-# From writeonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
-# Based on code by Yannick Gingras
-
-
-def abort_ro(*args, **kwargs):
-    ''' the terrible consequences for trying
-        to flush to the db '''
-    print "No writing allowed, tsk!  We're telling mom!"
-    return
+engine = create_engine(config.database_uri, echo=False, pool_recycle=600)
+Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+session = Session()
 
 
-def db_setup(connstring='sqlite:///:memory:',
-             echo=False, readonly=True):
-    engine = create_engine(connstring, echo=echo, pool_recycle=600)
-    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-    session = Session()
-    if readonly:
-        session.flush = abort_ro  # now it won't flush!
-
-    return session, engine
-
-
-# end from riteonly.wordpress.com/2009/07/16/simple-read-only-sqlalchemy-sessions/
-
-session, engine = db_setup(config.database_uri, readonly=False)
-
-
-class Binder():
+class Binder:
     def __init__(self):
         self.binds = {}
 
@@ -108,7 +87,7 @@ def un_escape(msg):
     return b64decode(msg)
 
 
-def error_formater(e_type, comment, other=None):
+def error_formatter(e_type, comment, other=None):
     if other is None:
         other = {}
     ret = {u"request": u"error",
@@ -133,7 +112,7 @@ class ClientHandler(Thread):
     def run(self):
         global radios_connections
         logs.print_debug("%s:%s połączył się" % self.addr)
-        self.conn.write(escape(json.dumps({"request": "type"})))
+        self.send_request({"request": "type"})
         msg = self.conn.read()
         buff = ""
         while msg and not self.__was_stopped and not was_killed:
@@ -149,7 +128,7 @@ class ClientHandler(Thread):
                     if "request" in data:
                         if self.type == WWW_TYPE:
                             if "radio" in data:
-                                if data["radio"] == -1:
+                                if data["radio"] == REQ_WWW_TO_SERVER_RADIO_ID:
                                     datacpy = dict(data)
                                     send_response = datacpy["request"] != "ok"
                                     del datacpy["request"]
@@ -163,16 +142,17 @@ class ClientHandler(Thread):
                                         del data["radio"]
                                         radio.send_request(data, self.send_request)
                                     else:
-                                        self.send_request(error_formater(u"radioNotConnected", u"Radio o id %s nie jest podlaczone" % data["radio"]))
+                                        self.send_request(error_formatter(
+                                            u"radioNotConnected", u"Radio o id %s nie jest podłączone" % data["radio"]))
                             else:
-                                self.send_request(error_formater(u"missingParameter", u"Brakuje patametrus radio", {u"parameter": u"radio"}))
+                                self.send_request(error_formatter(
+                                    u"missingParameter", u"Brakuje parametru radio", {u"parameter": u"radio"}))
                         elif self.type == RADIO_TYPE:
                             if "msgid" not in data:
                                 datacpy = dict(data)
-                                target = radio_comm.binds[datacpy["request"]]["target"]
                                 send_response = datacpy["request"] != "ok"
                                 del datacpy["request"]
-                                ret = target(self.conn, self.addr, **datacpy)
+                                ret = radio_comm.binds[data["request"]]["target"](self.conn, self.addr, **datacpy)
                                 if send_response:
                                     self.send_request(ret)
                             else:
@@ -181,10 +161,16 @@ class ClientHandler(Thread):
                                 del queries[datacpy["msgid"]]
                                 del datacpy["msgid"]
                                 back_ref(datacpy)
-                        elif data["request"] == "ok":
-                            datacpy = dict(data)
-                            del datacpy["request"]
-                            self.authenticate(**datacpy)
+                        else:
+                            if data["request"] == "ok":
+                                datacpy = dict(data)
+                                del datacpy["request"]
+                                self.authenticate(**datacpy)
+                            else:
+                                self.send_request(error_formatter(u"authRequired", u"Brak autoryzacji"))
+                    else:
+                        self.send_request(error_formatter(
+                            u"missingParameter", u"Brakuje parametru request", {u"parameter": u"request"}))
 
                 except ValueError as e:
                     print [un_escape(esc_string)]
@@ -201,8 +187,8 @@ class ClientHandler(Thread):
         self.stop()
 
     def authenticate(self, type, version, key=None):
-        if version != __version__:
-            self.send_request(error_formater(u"incompatibleVersions", u"Niekompatybilne wersje komponentow systemu."))
+        if version != __protocol_version__:
+            self.send_request(error_formatter(u"incompatibleVersions", u"Niekompatybilne wersje komponentow systemu."))
             self.type = UNAUTHORIZED_TYPE
             self.object = None
         if type == "radio":
@@ -217,11 +203,13 @@ class ClientHandler(Thread):
                 self.__renew_last_seen()
                 Thread(target=self.__pinger).start()
             else:
-                self.send_request(error_formater(u"wrongKey", u"Podany klucz radia jest bledny"))
-        if type == "www" and self.addr[0] == "127.0.0.1":
+                self.send_request(error_formatter(u"wrongKey", u"Podany klucz radia jest bledny"))
+        elif type == "www" and self.addr[0] == "127.0.0.1":  # TODO: better authentication
             logs.print_debug("%s:%s został zarejestrowany jako WWW" % self.addr)
             self.type = WWW_TYPE
             self.object = None
+        else:
+            pass
 
     def stop(self):
         logs.print_debug("%s:%s rozłączanie klienta" % self.addr)
@@ -229,18 +217,18 @@ class ClientHandler(Thread):
         self.conn.close()
 
     def send_request(self, req, back_ref=None):
-        global msgid
+        global next_msgid
         reqcpy = dict(req)
         if req["request"] not in ["ok", "error"] and back_ref is not None:
-            reqcpy["msgid"] = msgid
-            queries[msgid] = back_ref
-            msgid += 1
+            reqcpy["msgid"] = next_msgid
+            queries[next_msgid] = back_ref
+            next_msgid += 1
         try:
             self.conn.send(escape(json.dumps(reqcpy)))
         except socket.error, exc:
             print "Caught exception socket.error : %s" % exc
             if back_ref is not None:
-                back_ref(error_formater(u"connectionError", u"socket.error exception - %s" % exc))
+                back_ref(error_formatter(u"connectionError", u"socket.error exception - %s" % exc))
 
     def __pinger(self):
         while not self.__was_stopped:
@@ -258,6 +246,14 @@ class ClientHandler(Thread):
             session.commit()
 
 
+def shutdown(bind_socket):
+    global was_killed
+    logs.print_info("Shutting down cleanly")
+    was_killed = True
+    bind_socket.shutdown(socket.SHUT_RDWR)
+    bind_socket.close()
+
+
 def main():
     global was_killed
     bind_socket = socket.socket()
@@ -266,7 +262,7 @@ def main():
     logs.print_info("Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port))
     bind_socket.listen(5)
     try:
-        while True:
+        while not was_killed:
             new_socket, from_addr = bind_socket.accept()
             try:
                 conn = ssl.wrap_socket(new_socket,
@@ -276,13 +272,14 @@ def main():
 
                 handler = ClientHandler(conn, from_addr)
                 handler.start()
-            except ssl.SSLError:
-                pass
-
+            except ssl.SSLError as err:
+                logs.print_debug("SSLError - %s" % str(err))
+            except KeyboardInterrupt:
+                shutdown(bind_socket)
+            except Exception as e:
+                logs.print_exception("Exception while handling client from address - %s" % str(from_addr))
     except KeyboardInterrupt:
-        was_killed = True
-        bind_socket.shutdown(socket.SHUT_RDWR)
-        bind_socket.close()
+        shutdown(bind_socket)
 
 
 if __name__ == "__main__":
@@ -292,4 +289,12 @@ if __name__ == "__main__":
                     "https://github.com/mRokita/sMusic-www".center(45, " ") +
                     "|\n+---------------------------------------------+\n")
     was_killed = False
-    main()
+    while not was_killed:
+        try:
+            main()
+            was_killed = True
+        except Exception as e:
+            logs.print_exception("CRITICAL!!! SERVER CRASHED")
+            logs.print_info("restarting in 5 seconds")
+            time.sleep(5)
+            logs.print_info("restarting...")
