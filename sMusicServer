@@ -23,14 +23,9 @@ UNAUTHORIZED_TYPE = 0
 RADIO_TYPE = 1
 WWW_TYPE = 2
 
-aktualizacja_last_seen = datetime.timedelta(seconds=5)
-timeout_time = datetime.timedelta(seconds=30)
-ping_frequency = datetime.timedelta(seconds=5)
-
 msgid = 0
 queries = {}
 radios_connections = {}
-PATTERN_MSG = re.compile("([ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=+/]*?)\n(.+)?", re.DOTALL)
 
 Base = declarative_base()
 
@@ -249,15 +244,15 @@ class ClientHandler(Thread):
 
     def __pinger(self):
         while not self.__was_stopped:
-            if datetime.datetime.now() - self.object.last_seen > timeout_time:
+            if datetime.datetime.now() - self.object.last_seen > config.timeout_time:
                 logs.print_debug("%s:%s przekroczyl czas oczekiwania na odpowiedz" % self.addr)
                 self.stop()
-            elif datetime.datetime.now() - self.object.last_seen > ping_frequency:
+            elif datetime.datetime.now() - self.object.last_seen > config.ping_frequency:
                 self.send_request({"request": "ping"})
             time.sleep(1)
 
     def __renew_last_seen(self):
-        if self.object.last_seen is None or self.object.last_seen + aktualizacja_last_seen < datetime.datetime.now():
+        if self.object.last_seen is None or self.object.last_seen + config.aktualizacja_last_seen < datetime.datetime.now():
             self.object.last_seen = datetime.datetime.now()
             session.add(self.object)
             session.commit()
