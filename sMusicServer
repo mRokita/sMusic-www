@@ -25,6 +25,37 @@ __protocol_version__ = "0.1.9"
 
 REQ_WWW_TO_SERVER_RADIO_ID = -1
 
+
+class RequestError(Exception):
+    def __init__(self, error_type, message, other=None):
+        super(RequestError, self).__init__(message)
+        self.error_type = error_type
+        self.other = other
+
+    def to_dict(self):
+        return error_formatter(self.error_type, self.message, self.other)
+
+
+class MissingParameterError(RequestError):
+    def __init__(self, missing_parameter, message=None):
+        if not message:
+            message = "Brakuje parametru: " % missing_parameter
+            super(MissingParameterError, self).__init__("missingParameter", message, {"parameterName": missing_parameter})
+
+
+class WrongParameterError(RequestError):
+    def __init__(self, wrong_parameter, message=None):
+        if not message:
+            message = "Błędna wartość parametru: " % wrong_parameter
+        super(WrongParameterError, self).__init__("wrongParameter", message, {"parameterName": wrong_parameter})
+
+
+class RadioNotConnectedError(RequestError):
+    def __init__(self, radio_id, message=None):
+        if not message:
+            message = "Radio o ID: %s nie jest podłączone" % radio_id
+        super(RadioNotConnectedError, self).__init__("radioNotConnected", message, {"radioId": radio_id})
+
 next_msgid = 0
 queries = {}
 radios_connections = {}
@@ -118,63 +149,67 @@ class ClientHandler(Thread):
         while msg and not self.__was_stopped and not was_killed:
             buff += msg
             if '\n' in msg:
-                esc_string = buff[:buff.index('\n')]
-                buff = buff[buff.index('\n') + 1:]
-                if self.type == RADIO_TYPE:
-                    self.__renew_last_seen()
                 try:
-                    data = json.loads(un_escape(esc_string))
-                    logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
-                    if "request" in data:
-                        if self.type == WWW_TYPE:
-                            if "radio" in data:
-                                if data["radio"] == REQ_WWW_TO_SERVER_RADIO_ID:
+                    esc_string = buff[:buff.index('\n')]
+                    buff = buff[buff.index('\n') + 1:]
+                    if self.type == RADIO_TYPE:
+                        self.__renew_last_seen()
+                    try:
+                        data = json.loads(un_escape(esc_string))
+                        logs.print_debug("%s:%s: %s" % (self.addr[0], self.addr[1], data))
+                        if "request" in data:
+                            if self.type == WWW_TYPE:
+                                if "radio" in data:
+                                    if data["radio"] == REQ_WWW_TO_SERVER_RADIO_ID:
+                                        datacpy = dict(data)
+                                        send_response = datacpy["request"] != "ok"
+                                        del datacpy["request"]
+                                        del datacpy["radio"]
+                                        ret = www_comm.binds[data["request"]]["target"](**datacpy)
+                                        if send_response:
+                                            self.send_request(ret)
+                                    else:
+                                        if data["radio"] in radios_connections:
+                                            radio = radios_connections[data["radio"]]
+                                            del data["radio"]
+                                            radio.send_request(data, self.send_request)
+                                        else:
+                                            self.send_request(error_formatter(
+                                                u"radioNotConnected", u"Radio o id %s nie jest podłączone" % data["radio"]))
+                                else:
+                                    self.send_request(error_formatter(
+                                        u"missingParameter", u"Brakuje parametru radio", {u"parameter": u"radio"}))
+                            elif self.type == RADIO_TYPE:
+                                if "msgid" not in data:
                                     datacpy = dict(data)
                                     send_response = datacpy["request"] != "ok"
                                     del datacpy["request"]
-                                    del datacpy["radio"]
-                                    ret = www_comm.binds[data["request"]]["target"](**datacpy)
+                                    ret = radio_comm.binds[data["request"]]["target"](self.conn, self.addr, **datacpy)
                                     if send_response:
                                         self.send_request(ret)
                                 else:
-                                    if data["radio"] in radios_connections:
-                                        radio = radios_connections[data["radio"]]
-                                        del data["radio"]
-                                        radio.send_request(data, self.send_request)
-                                    else:
-                                        self.send_request(error_formatter(
-                                            u"radioNotConnected", u"Radio o id %s nie jest podłączone" % data["radio"]))
+                                    datacpy = dict(data)
+                                    back_ref = queries[datacpy["msgid"]]
+                                    del queries[datacpy["msgid"]]
+                                    del datacpy["msgid"]
+                                    back_ref(datacpy)
                             else:
-                                self.send_request(error_formatter(
-                                    u"missingParameter", u"Brakuje parametru radio", {u"parameter": u"radio"}))
-                        elif self.type == RADIO_TYPE:
-                            if "msgid" not in data:
-                                datacpy = dict(data)
-                                send_response = datacpy["request"] != "ok"
-                                del datacpy["request"]
-                                ret = radio_comm.binds[data["request"]]["target"](self.conn, self.addr, **datacpy)
-                                if send_response:
-                                    self.send_request(ret)
-                            else:
-                                datacpy = dict(data)
-                                back_ref = queries[datacpy["msgid"]]
-                                del queries[datacpy["msgid"]]
-                                del datacpy["msgid"]
-                                back_ref(datacpy)
+                                if data["request"] == "ok":
+                                    datacpy = dict(data)
+                                    del datacpy["request"]
+                                    self.authenticate(**datacpy)
+                                else:
+                                    self.send_request(error_formatter(u"authRequired", u"Brak autoryzacji"))
                         else:
-                            if data["request"] == "ok":
-                                datacpy = dict(data)
-                                del datacpy["request"]
-                                self.authenticate(**datacpy)
-                            else:
-                                self.send_request(error_formatter(u"authRequired", u"Brak autoryzacji"))
-                    else:
-                        self.send_request(error_formatter(
-                            u"missingParameter", u"Brakuje parametru request", {u"parameter": u"request"}))
+                            self.send_request(error_formatter(
+                                u"missingParameter", u"Brakuje parametru request", {u"parameter": u"request"}))
 
-                except ValueError as e:
-                    print [un_escape(esc_string)]
-                    print e
+                    except ValueError as e:
+                        print [un_escape(esc_string)]
+                        print e
+                except RequestError as err:
+                    self.send_request(err.toDict())
+                    logs.print_warning("Odebrano błędne zapytanie od %s typ - %s" % (self.addr, self.type), exc_info=True)
             try:
                 msg = self.conn.read()
             except (socket.error, ValueError) as e:
@@ -187,10 +222,11 @@ class ClientHandler(Thread):
         self.stop()
 
     def authenticate(self, type, version, key=None):
+        self.type = UNAUTHORIZED_TYPE
+        self.object = None
+        self.id = -1
         if version != __protocol_version__:
             self.send_request(error_formatter(u"incompatibleVersions", u"Niekompatybilne wersje komponentow systemu."))
-            self.type = UNAUTHORIZED_TYPE
-            self.object = None
         if type == "radio":
             radio = session.query(Radio).filter_by(access_key=key).first()
             if radio is not None:
@@ -277,7 +313,7 @@ def main():
             except KeyboardInterrupt:
                 shutdown(bind_socket)
             except Exception as e:
-                logs.print_exception("Exception while handling client from address - %s" % str(from_addr))
+                logs.print_exception("Exception while trying to handle client from address - %s" % str(from_addr))
     except KeyboardInterrupt:
         shutdown(bind_socket)
 
