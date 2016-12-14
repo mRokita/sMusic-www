@@ -246,6 +246,7 @@ class ClientHandler(Thread):
             print "Caught exception socket.error : %s" % exc
             if back_ref is not None:
                 back_ref(error_formater(u"connectionError", u"socket.error exception - %s" % exc))
+            self.stop()
 
     def __pinger(self):
         while not self.__was_stopped:
