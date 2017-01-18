@@ -267,7 +267,6 @@ class ClientHandler(Thread):
 def main():
     global was_killed
     bind_socket = socket.socket()
-    bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bind_socket.bind((config.listen_host, config.listen_port))
     logs.print_info("Nasłuchiwanie na {}:{}".format(config.listen_host, config.listen_port))
     bind_socket.listen(5)
