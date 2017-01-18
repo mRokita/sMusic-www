@@ -4,6 +4,7 @@ sMusic-www - config
 import ConfigParser
 import os.path
 import json
+import datetime
 
 conf = ConfigParser.ConfigParser()
 config_paths = ["server.ini", "/etc/sMusic/server.ini", "/etc/sMusic/server.default.ini", "server.default.ini"]
@@ -34,3 +35,7 @@ super_admin = json.loads(conf.get("WWW", "super_admins"))
 database_uri = conf.get("WWW", "database_uri")
 secret_key = conf.get("Security", "secret_key")
 ldap_host = conf.get("WWW", "ldap_server")
+
+aktualizacja_last_seen = datetime.timedelta(seconds=int(conf.get("Server", "last_seen_update")))
+timeout_time = datetime.timedelta(seconds=int(conf.get("Server", "timeout")))
+ping_frequency = datetime.timedelta(seconds=int(conf.get("Server", "ping_interval")))
