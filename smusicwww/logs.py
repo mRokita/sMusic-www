@@ -26,3 +26,4 @@ print_info = logging.info
 print_warning = logging.warning
 print_debug = logging.debug
 print_error = logging.error
+print_exception = logging.exception
