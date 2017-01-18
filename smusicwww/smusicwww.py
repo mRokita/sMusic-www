@@ -210,6 +210,10 @@ def api_v1_add_track_to_playlist(playlist_id, artist_id, album_id, track_id):
 def api_v1_del_track_from_playlist(playlist_id, track_num):
     return json.dumps(current_user.radio.del_track_from_playlist(playlist_id, track_num))
 
+@app.route('/api/v1/change_playlist_order/<playlist_id>/<source_index>/<dest_index>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_change_playlist_order(playlist_id, source_index, dest_index):
+    return json.dumps(current_user.radio.change_playlist_order(playlist_id, source_index, dest_index))
 
 @app.route('/api/v1/create_playlist/<playlist_name>/')
 @music_control_perm.require(http_exception=403)

@@ -120,6 +120,9 @@ class Radio(db.Model):
         return self.send_request(
             {"request": "set_queue_to_playlist", "start_playing": True, "playlist_id": playlist_id})
 
+    def change_playlist_order(self, playlist_id, source_index, dest_index):
+        return self.send_request({"request": "change_playlist_order", "playlist_id": playlist_id, "source_index": source_index, "dest_index": dest_index})
+
     def get_playlist(self, playlist_id):
         return self.send_request({"request": "get_playlist", "playlist_id": playlist_id})
 

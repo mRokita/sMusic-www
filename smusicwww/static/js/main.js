@@ -37,7 +37,7 @@ function findTrackWithId(track_id, tracks){
     return track
 }
 
-var app = angular.module('sMusic', ['ngCookies'])
+var app = angular.module('sMusic', ['ngCookies', 'as.sortable']);
 app.run(function($rootScope, $http, $cookies){
     $rootScope.isTouch = is_touch_device();
     $rootScope.change_radio = function(id){
@@ -76,6 +76,20 @@ app.controller('libraryPlaylists', function($scope, $http){
 });
 
 app.controller('libraryPlaylistView', function($scope, $http, $window){
+    $scope.items = ['apple', 'pineapple', 'pen'];
+    $scope.dragControlListeners = {
+        itemMoved: function (event) {
+        },
+
+        orderChanged: function(event) {
+            $http.get('/api/v1/change_playlist_order/' + playlist_id + '/'
+                + event.source.index + '/' + event.dest.index + '/').success(function(response){
+               $scope.playlist = response["playlist"];
+            });
+        },
+        clone: false,
+        allowDuplicates: false
+    };
     $scope.loadData = function(){
         $http.get('/api/v1/playlists/' + playlist_id).success(function(response){
             $scope.playlist = response["playlist"];

@@ -18,12 +18,8 @@ setup(name="sMusicServer",
                         "static/js/*",
                         "templates/*",
                         "static/css/*",
-                        "static/materialize/css/*",
-                        "static/materialize/font/material-design-icons/*",
-                        "static/materialize/font/roboto/*",
-                        "static/materialize/js/*",
-                        "static/materialize/*",
                         "static/images/*",
+                        "static/ng-sortable/*"
                         ]
       },
       scripts=["sMusicServer"],
