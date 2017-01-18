@@ -9,12 +9,14 @@ from base64 import b64decode, b64encode
 import json
 from inspect import getargspec
 from threading import Thread
+
 from smusicwww import logs
 from smusicwww import config
 from smusicwww import __version__
 from sqlalchemy import Integer, Column, String, create_engine, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import SQLAlchemyError
 import datetime
 import time
 import sys
@@ -80,7 +82,6 @@ class Radio(Base):
 
 engine = create_engine(config.database_uri, echo=False, pool_recycle=600)
 Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-session = Session()
 
 
 class Binder:
@@ -251,7 +252,9 @@ class ClientHandler(Thread):
         if type == "radio":
             if key is None:
                 raise MissingParameterError("key")
+            session = Session()
             radio = session.query(Radio).filter_by(access_key=key).first()  # TODO: ogarnąć co jeśli byłby zły typ zmiennej key
+            session.close()
             if radio is None:
                 raise RequestError(u"wrongKey", u"Podany klucz radia jest błędny")
             radios_connections[radio.id] = self
@@ -304,9 +307,18 @@ class ClientHandler(Thread):
 
     def __renew_last_seen(self):
         if self.object.last_seen is None or self.object.last_seen + config.aktualizacja_last_seen < datetime.datetime.now():
+            session = Session()
+            self.object = session.query(Radio).filter_by(access_key=self.object.access_key).first()
+            if self.object is None:
+                self.stop()
             self.object.last_seen = datetime.datetime.now()
             session.add(self.object)
-            session.commit()
+            try:
+                session.commit()
+            except SQLAlchemyError:
+                session.rollback()
+            finally:
+                session.close()
 
 
 def shutdown(bind_socket):
