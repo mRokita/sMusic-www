@@ -9,7 +9,6 @@ from access_control import admin_perm, library_browse_perm, music_control_perm, 
 from radio_management import Radio
 import access_control
 import config
-import radio_utils
 import upload
 from __init__ import __version__
 from flask_login import current_user
@@ -31,9 +30,10 @@ app.secret_key = config.secret_key
 
 
 @app.context_processor
-def inject_navigation_bar_data():
+def inject_menu_data():
     navigation_bar = [('/', 'index', u'Odtwarzacz'),
-                      ('/library/', 'library', u'Biblioteka')]
+                      ('/library/', 'library', u'Biblioteka'),
+                      ('/playlists/', 'playlists', u'Playlisty')]
     if upload_perm.can():
         navigation_bar.append(('/upload/', 'upload', u'Dodawanie utworów'))
     if admin_perm.can():
@@ -61,12 +61,24 @@ def fix_chars(string):
 
 
 def render_template_with_args(template, **kwargs):
-    return render_template(template, radio_utils=radio_utils, version=__version__, **kwargs)
+    return render_template(template, version=__version__, **kwargs)
 
 
 @app.route('/')
 def ui_player():
     return render_template("player.html")
+
+
+@app.route('/playlists/')
+@library_browse_perm.require(http_exception=403)
+def ui_playlists():
+    return render_template("playlists.html")
+
+
+@app.route('/playlists/<playlist>/')
+@library_browse_perm.require(http_exception=403)
+def ui_playlist_view(playlist):
+    return render_template("playlist_view.html", playlist_id = playlist)
 
 
 @app.route('/library/')
@@ -92,6 +104,18 @@ def ui_library_artist(artist):
 @library_browse_perm.require(http_exception=403)
 def ui_library_artist_album(artist, album):
     return render_template("library_artist_album_tracks.html", artist=artist, album=album)
+
+
+@app.route('/api/v1/playlists/')
+@library_browse_perm.require(http_exception=403)
+def api_v1_playlists():
+    return json.dumps(current_user.radio.get_playlists())
+
+
+@app.route('/api/v1/playlists/<playlist>')
+@library_browse_perm.require(http_exception=403)
+def api_v1_playlist_view(playlist):
+    return json.dumps(current_user.radio.get_playlist(playlist))
 
 
 @app.route('/api/v1/library/')
@@ -152,6 +176,16 @@ def api_v1_status():
 def api_v1_clear_q_and_play(artist_id, album_id, track_id):
     return json.dumps(current_user.radio.clear_queue_and_play(artist_id, album_id, track_id))
 
+@app.route('/api/v1/clear_q_and_play_playlist/<playlist_id>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_clear_q_and_play_playlist(playlist_id):
+    return json.dumps(current_user.radio.clear_queue_and_play_playlist(playlist_id))
+
+
+@app.route('/api/v1/add_playlist_to_queue/<playlist_id>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_add_playlist_to_queue(playlist_id):
+    return json.dumps(current_user.radio.add_playlist_to_queue(playlist_id))
 
 @app.route('/api/v1/clear_queue/')
 @music_control_perm.require(http_exception=403)
@@ -165,10 +199,32 @@ def api_v1_add_to_q(artist_id, album_id, track_id):
     return json.dumps(current_user.radio.add_to_queue(artist_id, album_id, track_id))
 
 
+@app.route('/api/v1/add_track_to_playlist/<playlist_id>/<artist_id>/<album_id>/<track_id>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_add_track_to_playlist(playlist_id, artist_id, album_id, track_id):
+    return json.dumps(current_user.radio.add_track_to_playlist(playlist_id, artist_id, album_id, track_id))
+
+
+@app.route('/api/v1/del_track_from_playlist/<playlist_id>/<track_num>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_del_track_from_playlist(playlist_id, track_num):
+    return json.dumps(current_user.radio.del_track_from_playlist(playlist_id, track_num))
+
+
+@app.route('/api/v1/create_playlist/<playlist_name>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_create_playlist(playlist_name):
+    return json.dumps(current_user.radio.create_playlist(playlist_name))
+
+
+@app.route('/api/v1/del_playlist/<playlist_id>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_del_playlist(playlist_id):
+    return json.dumps(current_user.radio.del_playlist(playlist_id))
+
 @app.route('/api/v1/current_queue/')
 def api_v1_current_queue():
     return json.dumps(current_user.radio.get_current_queue())
-
 
 @app.route('/api/v1/search_track/<query>')
 @library_browse_perm.require(http_exception=403)

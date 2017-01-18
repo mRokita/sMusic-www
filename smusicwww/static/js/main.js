@@ -44,7 +44,7 @@ app.run(function($rootScope, $http, $cookies){
         $http.get("/api/v1/change_radio/"+id).success(function(response){
             location.reload();
         });
-    }
+    };
     $rootScope.change_radio_anonymous = function(id){
         var expireDate = new Date();
         expireDate.setDate(expireDate.getDate() + 365);
@@ -52,6 +52,81 @@ app.run(function($rootScope, $http, $cookies){
         location.reload();
     }
 });
+
+app.controller('libraryPlaylists', function($scope, $http){
+    $scope.playlist_name = null;
+    $scope.loadData = function(){
+        $http.get('/api/v1/playlists/').success(function(response){
+            $scope.playlists = response["playlists"];
+        });
+    };
+    $scope.createPlaylist = function(){
+        if(!$scope.playlist_name) return;
+        for(var i in $scope.playlists){
+            if($scope.playlists[i]['id'] === idFromTag($scope.playlist_name)){
+                Materialize.toast('BŁĄD: Playlista o nazwie "'+$scope.playlists[i]['name']+'" już istnieje!', 3000);
+                return;
+            }
+        }
+        $http.get('/api/v1/create_playlist/' + $scope.playlist_name + '/').success(function(response){
+            $scope.playlists = response["playlists"];
+        });
+    };
+    $scope.loadData();
+});
+
+app.controller('libraryPlaylistView', function($scope, $http, $window){
+    $scope.loadData = function(){
+        $http.get('/api/v1/playlists/' + playlist_id).success(function(response){
+            $scope.playlist = response["playlist"];
+        });
+    };
+    $scope.delPlaylist = function(){
+        $http.get("/api/v1/del_playlist/" + $scope.playlist.id).success(function(){
+            $window.location.href='/playlists/';
+        })
+    };
+    $scope.clearQueueAndPlayTrack = function(artist_id, album_id, track_id){
+        $http.get("/api/v1/clear_q_and_play/"+artist_id+"/"+album_id+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.playlist.tracks);
+            Materialize.toast('Odtwarzanie ' + track["title"], 3000);
+        });
+    };
+
+    $scope.addToQueue = function(artist_id, album_id, track_id){
+        $http.get("/api/v1/add_to_q/"+artist_id+"/"+album_id+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.playlist.tracks);
+            Materialize.toast('Dodano ' + track["title"] + ' do kolejki', 3000);
+        })
+    };
+
+    $scope.addPlaylistToQueue = function(playlist_id){
+        $http.get("/api/v1/add_playlist_to_queue/" + playlist_id + "/").success(function(response){
+           Materialize.toast('Dodano playlistę do kolejki!');
+        });
+    };
+
+    $scope.clearQueueAndPlayPlaylist = function(playlist_id){
+        $http.get("/api/v1/clear_q_and_play_playlist/" + playlist_id + "/").success(function(response){
+           Materialize.toast('Rozpoczęto odtwarzanie playlisty!');
+        });
+    };
+
+    $scope.delTrackFromPlaylist = function(playlist_id, track_num){
+        $http.get("/api/v1/del_track_from_playlist/" + playlist_id + "/" + track_num + "/").success(function(response){
+            $scope.playlist = response["playlist"];
+            Materialize.toast("Element usunięto");
+        });
+    };
+
+    $scope.getPlaylists = function(){
+        $http.get('/api/v1/playlists/').success(function(response){
+            $scope.playlists = response["playlists"];
+        });
+    };
+    $scope.loadData();
+});
+
 app.controller('libraryMainView', function($scope, $http){
     $scope.loadData = function(){
         $http.get("/api/v1/library/").success(function(response){
@@ -73,6 +148,7 @@ app.controller('libraryArtistAlbums', function($scope, $http){
 });
 
 app.controller('libraryArtistAlbumTracks', function($scope, $http){
+    $scope.lastOpenedModal = null;
     $scope.loadData = function(){
         $scope.artist = artist;
         $scope.album = album;
@@ -98,12 +174,33 @@ app.controller('libraryArtistAlbumTracks', function($scope, $http){
             Materialize.toast('Dodano '+track["title"]+' do kolejki', 3000);
         });
     };
+    $scope.addToPlaylist = function(playlist_id, artist_id, album_id, track_id){
+        $http.get("/api/v1/add_track_to_playlist/"+playlist_id+"/"+artist_id+"/"+album_id+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.tracks);
+            Materialize.toast('Dodano ' + track["title"] + ' do playlisty ' + playlist_id, 3000);
+            $scope.lastOpenedModal.modal('close');
+        });
+    };
 
+    $scope.openModal = function(index){
+        $scope.lastOpenedModal = $("#playlist-modal-"+index);
+        $scope.lastOpenedModal.modal();
+        $scope.lastOpenedModal.modal('open');
+        $scope.getPlaylists();
+    };
+
+    $scope.getPlaylists = function(){
+        $http.get('/api/v1/playlists/').success(function(response){
+            $scope.playlists = response["playlists"];
+        });
+    };
     $scope.loadData();
 });
 
 app.controller('librarySearch', function($scope, $http){
     $scope.query = query;
+    $scope.lastOpenedModal = null;
+    $scope.playlists = [];
     console.log($scope.query);
     $scope.queryChange = function(){
         $scope.search();
@@ -128,6 +225,27 @@ app.controller('librarySearch', function($scope, $http){
             track = findTrackWithId(track_id, $scope.tracks);
             Materialize.toast('Dodano ' + track["title"] + ' do kolejki', 3000);
         })
+    };
+
+    $scope.getPlaylists = function(){
+        $http.get('/api/v1/playlists/').success(function(response){
+            $scope.playlists = response["playlists"];
+        });
+    };
+
+    $scope.addToPlaylist = function(playlist_id, artist_id, album_id, track_id){
+        $http.get("/api/v1/add_track_to_playlist/"+playlist_id+"/"+artist_id+"/"+album_id+"/"+track_id+"/").success(function(response){
+            track = findTrackWithId(track_id, $scope.tracks);
+            Materialize.toast('Dodano ' + track["title"] + ' do playlisty ' + playlist_id, 3000);
+            $scope.lastOpenedModal.modal('close')
+        });
+    };
+
+    $scope.openModal = function(index){
+        $scope.lastOpenedModal = $("#playlist-modal-"+index);
+        $scope.lastOpenedModal.modal();
+        $scope.lastOpenedModal.modal('open');
+        $scope.getPlaylists();
     };
     $scope.search();
 });

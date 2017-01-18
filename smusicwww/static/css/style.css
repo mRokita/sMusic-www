@@ -9,6 +9,9 @@ body {
   	left: 0;
 }
 
+[data-ng-click]{
+	cursor: pointer;
+}
 .code {
 	font-family: monospace;
 	font-style: normal;

@@ -1,3 +1,4 @@
+{% set active_page = "library" %}
 {% extends "library.html" %}
 {% block controller %}libraryArtistAlbumTracks{% endblock %}
 {% block breadcrumb %}
@@ -10,6 +11,12 @@
 {% endblock %}
 {% block content %}
     {% raw %}
+    <div data-ng-repeat="track in tracks" class="modal bottom-sheet blue" id="playlist-modal-{{ $index }}">
+            <span class="white-text" style="text-transform:uppercase;padding:5px;"><b>Wybierz playlistę</b></span>
+            <ul class="collection" style="margin:0;padding:0; background:none;">
+                <li class="collection-item" data-ng-repeat="playlist in playlists" data-ng-click="addToPlaylist(playlist.id, artist, album, track.id)">{{ playlist.name }}</li>
+            </ul>
+        </div>
     <div class="col l12 m12 s12 grey" style="padding:0;">
         <div class="col l5 m5 s12">
             <div class="card">
@@ -25,22 +32,16 @@
             </div>
         </div>
         <div class="col l7 m7 s12 grey">
-            <ul class="collection white" data-ng-if="!isTouch">
-                <li data-ng-repeat="track in tracks" class="collection-item">
-                    <span>{{ track.title }}</span>
-                    <span class="secondary-content">
-                        <a href="javascript:void(0)" data-ng-click="addToQueue(track.id)" title="Dodaj do kolejki"><i class="small material-icons">toc</i></a>
-                        <a href="javascript:void(0)" data-ng-click="clearQueueAndPlayTrack(track.id)" title="Wyczyść kolejkę i zacznij grać"><i class="small material-icons">play_arrow</i></a>
-                    </span>
-                </li>
-            </ul>
-            <ul class="collapsible white" data-ng-if="isTouch" data-collapsible="accordion">
+            <ul class="collapsible white" data-collapsible="accordion">
                 <li data-ng-repeat="track in tracks">
                     <div class="collapsible-header">{{ track.title }}</div>
                     <div class="collapsible-body blue-grey">
                         <ul class="collection blue-grey">
-                            <li class="collection-item blue-grey" data-ng-click="addToQueue(track.id)"><a class="white-text">Dodaj do kolejki</a></li>
-                            <li class="collection-item blue-grey" data-ng-click="clearQueueAndPlayTrack(track.id)"><a class="white-text">Wyczyść kolejkę i zacznij grać</a></li>
+                            <li class="collection-item blue-grey" data-ng-click="openModal($index)">
+                                <a class="white-text">Dodaj do playlisty</a>
+                            </li>
+                            <li class="collection-item red" data-ng-click="addToQueue(track.id)"><a class="white-text">Dodaj do kolejki</a></li>
+                            <li class="collection-item red" data-ng-click="clearQueueAndPlayTrack(track.id)"><a class="white-text">Wyczyść kolejkę i zacznij grać</a></li>
                         </ul>
                     </div>
                 </li>

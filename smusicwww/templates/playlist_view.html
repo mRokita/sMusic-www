@@ -1,0 +1,73 @@
+{% set active_page = "playlists" %}
+{% extends "library.html" %}
+{% block controller %}libraryPlaylistView{% endblock %}
+{% block breadcrumb %}
+    <a href="/library" class="breadcrumb">Biblioteka</a>
+    <a href="/playlists" class="breadcrumb">Playlisty</a>
+    <a href="/playlists/{{ playlist_id }}" class="breadcrumb">{% raw %}{{ playlist.name }}{% endraw %}</a>
+{% endblock %}
+{% block after_breadcrumb %}
+    <div class="black z-depth-2">
+    <div class="row" style="padding:10px;margin-bottom:0">
+        <span data-ng-click="addPlaylistToQueue(playlist.id)" class="white-text col s6 center-align text-uppercase">
+            <b>DODAJ PLAYLISTĘ DO KOLEJKI</b>
+        </span>
+        <span data-ng-click="clearQueueAndPlayPlaylist(playlist.id)" class="white-text col s6 center-align text-uppercase">
+            <b>ODTWÓRZ PLAYLISTĘ</b>
+        </span>
+    </div>
+    </div>
+{% endblock %}
+{% block content%}
+    {% raw %}
+    <ul class="collapsible" style="padding:0;margin:0;margin-top:5px;" data-collapsible="accordion">
+
+        <li data-ng-repeat="track in playlist.tracks">
+            <div class="collapsible-header"><span data-ng-if="!isTouch"><a data-ng-href="/library/{{ track.artist_id }}/">{{ track.artist }}</a> - <a data-ng-href="/library/{{ track.artist_id }}/{{ track.album_id }}/">{{ track.album }}</a> - </span>{{track.title}}
+            </div>
+            <div class="collapsible-body">
+                <ul class="collection" style="border-radius: 0;">
+                    <li data-ng-if="isTouch" class="collection-item grey lighten-2">
+                        <b>Album:</b> <a data-ng-href="/library/{{ track.artist_id }}/{{ track.album_id }}/">{{ track.album}}</a>
+                    </li>
+                    <li data-ng-if="isTouch" class="collection-item grey lighten-2">
+                        <b>Wykonawca:</b> <a data-ng-href="/library/{{ track.artist_id }}/">{{ track.artist }}</a>
+                    </li>
+                    <li class="collection-item red" data-ng-click="delTrackFromPlaylist(playlist.id, $index)">
+                        <a class="white-text">Usuń z playlisty</a>
+                    </li>
+                    <li class="collection-item blue-grey" data-ng-click="addToQueue(track.artist_id, track.album_id, track.id)">
+                        <a class="white-text">Dodaj do kolejki</a>
+                    </li>
+                    <li class="collection-item blue-grey" data-ng-click="clearQueueAndPlayTrack(track.artist_id, track.album_id, track.id)">
+                        <a class="white-text">Wyczyść kolejkę i zacznij grać</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+    {% endraw %}
+{% endblock %}
+{% block after_cardpanel %}
+      <a href="#modal-del-playlist" class="modal-action modal-close waves-effect waves-white btn red right col s12 l3 m4" style="margin-bottom:5px;">Usuń playlistę</a>
+{% endblock %}
+{% block script %}
+    <div id="modal-del-playlist" class="modal">
+    <div class="modal-content">
+        <p>Czy na pewno chcesz usunąć tą playlistę?</p>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Anuluj</a>
+      <a href="#!" data-ng-click="delPlaylist()" class="modal-action modal-close waves-effect waves-green btn-flat red">Usuń</a>
+    </div>
+  </div>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('.modal').modal();
+        });
+    </script>
+    <script type="text/javascript">
+        var playlist_id = "{{ playlist_id }}";
+    </script>
+    {{ super() }}
+{% endblock %}

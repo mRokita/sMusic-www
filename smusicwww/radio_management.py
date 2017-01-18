@@ -92,9 +92,39 @@ class Radio(db.Model):
             {"request": "set_queue_to_single_track", "artist_id": artist_id, "album_id": album_id, "track_id": track_id,
              "start_playing": True})
 
+    def del_track_from_playlist(self, playlist_id, track_num):
+        return self.send_request({
+            "request": "del_track_from_playlist", "playlist_id": playlist_id, "track_num": track_num
+        })
+
     def add_to_queue(self, artist_id, album_id, track_id):
         return self.send_request(
             {"request": "add_to_queue", "artist_id": artist_id, "album_id": album_id, "track_id": track_id})
+
+    def add_track_to_playlist(self, playlist_id, artist_id, album_id, track_id):
+        return self.send_request({
+            "request": "add_track_to_playlist", "playlist_id": playlist_id,
+            "artist_id": artist_id, "album_id": album_id, "track_id": track_id})
+
+    def create_playlist(self, playlist_name):
+        return self.send_request({"request": "create_playlist", "playlist_name": playlist_name})
+
+    def del_playlist(self, playlist_id):
+        return self.send_request({"request": "del_playlist", "playlist_id": playlist_id})
+
+    def add_playlist_to_queue(self, playlist_id):
+        return self.send_request(
+            {"request": "add_playlist_to_queue", "playlist_id": playlist_id})
+
+    def clear_queue_and_play_playlist(self, playlist_id):
+        return self.send_request(
+            {"request": "set_queue_to_playlist", "start_playing": True, "playlist_id": playlist_id})
+
+    def get_playlist(self, playlist_id):
+        return self.send_request({"request": "get_playlist", "playlist_id": playlist_id})
+
+    def get_playlists(self):
+        return self.send_request({"request": "get_playlists"})
 
     def get_tracks(self, artist=None, album=None):
         return self.send_request({"request": "get_tracks", "artist": artist, "album": album})

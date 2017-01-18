@@ -1,0 +1,35 @@
+{% set active_page = "playlists" %}
+{% extends "library.html" %}
+{% block controller %}libraryPlaylists{% endblock %}
+{% block breadcrumb %}
+    <a href="/library" class="breadcrumb">Biblioteka</a>
+    <a href="/library" class="breadcrumb">Playlisty</a>
+    <div class="fixed-action-btn">
+        <a class="btn-floating btn-large waves-effect waves-light green" href="#modal-add-playlist"><i class="material-icons">add</i></a>
+    </div>
+{% endblock %}
+
+{% block items %}
+    {% raw %}
+    <a data-ng-repeat="playlist in playlists" data-ng-href="{{playlist.id}}/" class="collection-item">{{ playlist.name }}&nbsp;&nbsp;</a>
+    {% endraw %}
+{% endblock %}
+{% block script %}
+    <div id="modal-add-playlist" class="modal">
+        <form class="row">
+                <div class="input-field col s12">
+                    <input id="playlist_name" data-ng-model="playlist_name" type="text">
+                    <label for="playlist_id">Nazwa playlisty</label>
+                </div>
+        </form>
+    <div class="modal-footer">
+      <a data-ng-click="createPlaylist()" class=" modal-action modal-close waves-effect waves-green btn-flat">Utwórz</a>
+    </div>
+  </div>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('.modal').modal();
+        });
+    </script>
+    {{ super() }}
+{% endblock %}

@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% set active_page = "library" %}
 {% block title %}sMusic-www - Minimal Preview{% endblock %}
 {% block menu %}
     <div class="hide-on-med-and-down">
         {% include "search_box.html" %}
     </div>
-    {{ super() }}
+    {{ super() }}`
     <div class="hide-on-large-only">
         {% include "search_box.html" %}
     </div>
@@ -23,6 +22,7 @@ Biblioteka muzyczna
           </div>
         </div>
         </nav>
+        {% block after_breadcrumb %}{% endblock %}
         {% block content %}
         <div class="col l12 m12 s12">
             {% block collection %}
@@ -33,6 +33,8 @@ Biblioteka muzyczna
         </div>
         {% endblock %}
     </div>
+    {% block after_cardpanel %}
+    {% endblock %}
 {% endblock %}
 {% block script %}
     <script type="text/javascript" src="/static/js/main.js"></script>
