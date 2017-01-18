@@ -1,0 +1,9 @@
+sqlalchemy
+flask
+flask_sqlalchemy
+flask_login
+flask_principal
+flask_admin
+ldap3<2.0.0
+passlib
+flask_wtf

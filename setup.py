@@ -27,7 +27,7 @@ setup(name="sMusicServer",
                         ]
       },
       scripts=["sMusicServer"],
-      requires=["flask", "jinja2", "flask_login", "flask_principal", "flask_admin", "ldap3", "sqlalchemy", "flask_sqlalchemy", "passlib", "flask_wtf"],
+      requires=["flask", "jinja2", "flask_login", "flask_principal", "flask_admin", "ldap3<2.0.0", "sqlalchemy", "flask_sqlalchemy", "passlib", "flask_wtf"],
       data_files=[('/etc/sMusic/', ['server.default.ini']),
                   ('/usr/share/sMusic/', ['smusicwww.wsgi']),
                   ('/usr/lib/systemd/system', ['sMusicServer.service'])],
