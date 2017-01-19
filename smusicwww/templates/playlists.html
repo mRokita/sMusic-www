@@ -11,7 +11,7 @@
 
 {% block items %}
     {% raw %}
-    <a data-ng-repeat="playlist in playlists" data-ng-href="{{playlist.id}}/" class="collection-item">{{ playlist.name }}&nbsp;&nbsp;</a>
+    <a data-ng-repeat="playlist in playlists" data-ng-href="{{playlist.id}}/" class="collection-item black-text">{{ playlist.name }}&nbsp;&nbsp;</a>
     {% endraw %}
 {% endblock %}
 {% block script %}
@@ -23,7 +23,7 @@
                 </div>
         </form>
     <div class="modal-footer">
-      <a data-ng-click="createPlaylist()" class=" modal-action modal-close waves-effect waves-green btn-flat">Utwórz</a>
+      <a data-ng-click="createPlaylist()" class="modal-action modal-close waves-effect waves-green btn-flat">Utwórz</a>
     </div>
   </div>
     <script type="text/javascript">
