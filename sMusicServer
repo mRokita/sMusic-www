@@ -155,6 +155,8 @@ class ClientHandler(Thread):
         self.addr = addr
         self.type = UNAUTHORIZED_TYPE
         self.object = None
+        self.last_seen = None
+        self.access_key = None
         self.id = -1
 
     def run(self):  # TODO: Jakaś weryfikacja typów otrzymywanych danych ich ilości itp.
@@ -245,8 +247,8 @@ class ClientHandler(Thread):
 
     def authenticate(self, type, version, key=None):
         self.type = UNAUTHORIZED_TYPE
-        self.object = None
         self.id = -1
+        self.access_key = None
         if version != __protocol_version__:
             raise RequestError(u"incompatibleVersions", u"Niekompatybilne wersje komponentów systemu.")
         if type == "radio":
@@ -257,18 +259,18 @@ class ClientHandler(Thread):
             session.close()
             if radio is None:
                 raise RequestError(u"wrongKey", u"Podany klucz radia jest błędny")
+            self.access_key = key
             radios_connections[radio.id] = self
             self.id = radio.id
             logs.print_info(
                 u"%s:%s został zarejestrowany jako RADIO o id=%s" % (self.addr[0], self.addr[1], str(radio.id)))
             self.type = RADIO_TYPE
-            self.object = radio
+            self.last_seen = radio.last_seen
             self.__renew_last_seen()
             Thread(target=self.__pinger).start()
         elif type == "www" and self.addr[0] == "127.0.0.1":  # TODO: better authentication
             logs.print_debug(u"%s:%s został zarejestrowany jako WWW" % self.addr)
             self.type = WWW_TYPE
-            self.object = None
         else:
             raise WrongParameterError("type")
 
@@ -295,10 +297,10 @@ class ClientHandler(Thread):
 
     def __pinger(self):
         while not self.__was_stopped:
-            if datetime.datetime.now() - self.object.last_seen > config.timeout_time:
+            if datetime.datetime.now() - self.last_seen > config.timeout_time:
                 logs.print_debug(u"%s:%s przekroczyl czas oczekiwania na odpowiedz" % self.addr)
                 self.stop()
-            elif datetime.datetime.now() - self.object.last_seen > config.ping_frequency:
+            elif datetime.datetime.now() - self.last_seen > config.ping_frequency:
                 try:
                     self.send_request({"request": "ping"})
                 except RequestError:
@@ -306,12 +308,12 @@ class ClientHandler(Thread):
             time.sleep(1)
 
     def __renew_last_seen(self):
-        if self.object.last_seen is None or self.object.last_seen + config.aktualizacja_last_seen < datetime.datetime.now():
+        if self.last_seen is None or self.last_seen + config.aktualizacja_last_seen < datetime.datetime.now():
             session = Session()
-            self.object = session.query(Radio).filter_by(access_key=self.object.access_key).first()
+            self.object = session.query(Radio).filter_by(access_key=self.access_key).first()
             if self.object is None:
                 self.stop()
-            self.object.last_seen = datetime.datetime.now()
+            self.last_seen = self.object.last_seen = datetime.datetime.now()
             session.add(self.object)
             try:
                 session.commit()
