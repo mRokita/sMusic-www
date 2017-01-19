@@ -206,7 +206,7 @@ class ClientHandler(Thread):
                                 del data["radio"]
                                 radio.send_request(data, self.send_request)
                         elif self.type == RADIO_TYPE:
-                            #self.__renew_last_seen()
+                            self.__renew_last_seen()
                             if "msgid" not in data:
                                 datacpy = dict(data)
                                 send_response = datacpy["request"] != "ok"
