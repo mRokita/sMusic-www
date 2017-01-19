@@ -40,8 +40,8 @@
                 {% if id != active_page %}{% endif %}">{{ caption|e }}</a>
             {% endfor %}
             <li class="divider"></li>
-            <li><a class="subheader">Wybierz radio</a></li>
             {% if radio_change_can %}
+                <li><a class="subheader">Wybierz radio</a></li>
                 <li><a class='dropdown-button' href="#" data-activates='dropdown1' data-beloworigin="true"
                        data-alignment="right">{{ radio_current_name }}</a></li>
                 <ul id='dropdown1' class='dropdown-content'>
