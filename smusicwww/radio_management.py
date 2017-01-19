@@ -123,6 +123,15 @@ class Radio(db.Model):
     def change_playlist_order(self, playlist_id, source_index, dest_index):
         return self.send_request({"request": "change_playlist_order", "playlist_id": playlist_id, "source_index": source_index, "dest_index": dest_index})
 
+    def move_queue_item(self, source_index, dest_index):
+        return self.send_request({"request": "move_queue_item", "source_index": source_index, "dest_index": dest_index})
+
+    def set_queue_position(self, pos):
+        return self.send_request({"request": "set_queue_position", "pos": pos})
+
+    def del_from_queue(self, pos):
+        return self.send_request({"request": "del_from_queue", "pos": pos})
+
     def get_playlist(self, playlist_id):
         return self.send_request({"request": "get_playlist", "playlist_id": playlist_id})
 

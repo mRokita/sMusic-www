@@ -41,8 +41,15 @@ Panel główny
         <div class="col l7 m6 s12">
             <div class="card-panel white" data-ng-if="queue.length">
                 <h5 style="margin-top:0">Kolejka</h5>
-                <ul class="collection" >
-                    <li class="collection-item" data-ng-repeat="track in queue">{{ track.title }}&nbsp;&nbsp;<span class="grey-text">{{ track.artist }}&nbsp;-&nbsp;{{ track.album }}</span><a class="secondary-content">{{ track.length_readable }}</a></li>
+                <ul data-as-sortable="dragControlListeners" data-ng-model="queue" class="collection" >
+                    <li data-as-sortable-item data-ng-repeat="track in queue">
+                        <div data-as-sortable-item-handle data-ng-class="{true:'red-text', false:''}[track.is_current]" style="white-space:nowrap;" class="collection-item">{{ track.title }}&nbsp;&nbsp;<span class="grey-text hide-on-small-only"><small>- {{ track.artist }}&nbsp;-&nbsp;{{ track.album }} - [{{ track.length_readable }}]</small></span>
+                                <a class="secondary-content" style="position: absolute; right:0;">
+                                    <i data-ng-click="setQueuePosition($index)" class="material-icons">play_circle_filled</i>&nbsp;&nbsp;<i data-ng-click="delFromQueue($index)" class="material-icons red-text">delete</i>
+                                </a>
+                        </div>
+                    </li>
+
                 </ul>
                 <button class="waves-effect waves-light btn" data-ng-click="clearQueue()">WYCZYŚĆ</button>
             </div>
@@ -65,7 +72,7 @@ Panel główny
                         <input type="range" id="progress" step="1" min="0" max="{{ duration }}" data-ng-model="position" data-ng-change="seek()" />
                     </p>
                     <p class="range-field" >
-                        <label for="volume">Głośność</label>
+                        <label for="volume"><i class="material-icons">volume_up</i></label>
                         <input type="range" id="volume" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()" />
                     </p>
                 </form>

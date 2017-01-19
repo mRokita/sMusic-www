@@ -79,6 +79,7 @@ app.controller('libraryPlaylistView', function($scope, $http, $window){
     $scope.items = ['apple', 'pineapple', 'pen'];
     $scope.dragControlListeners = {
         itemMoved: function (event) {
+            console.log('moved');
         },
 
         orderChanged: function(event) {
@@ -266,6 +267,8 @@ app.controller('librarySearch', function($scope, $http){
 
 app.controller('playerStatus', function($scope, $http, $interval){
     $scope.isFileLoaded = false;
+    $scope.blockQueue = false;
+    $scope.cachedQueue = null;
     $scope.albumArtURL = "/static/images/nocover.jpg";
     $scope.loadData = function(status) {
         var loadFromStatus = function (response) {
@@ -305,8 +308,57 @@ app.controller('playerStatus', function($scope, $http, $interval){
         else
             loadFromStatus(status);
         $http.get("/api/v1/current_queue/").success(function (response){
-            $scope.queue = response['queue'];
+            if(!$scope.blockQueue)
+                $scope.queue = response['queue'];
+            $scope.cachedQueue = jQuery.extend(true, {}, response['queue']);
         });
+    };
+
+    $scope.setQueuePosition = function(pos){
+        $http.get('/api/v1/set_queue_position/' + pos +'/').success(function(response){
+            $scope.queue = response["queue"];
+        });
+    };
+
+    $scope.delFromQueue = function(pos){
+        $http.get('/api/v1/del_from_queue/' + pos +'/').success(function(response){
+            $scope.queue = response["queue"];
+        });
+    };
+
+    $scope.dragControlListeners = {
+
+        dragStart: function(event){
+            $scope.blockQueue = true;
+            $scope.oldQueue = jQuery.extend(true, {}, $scope.cachedQueue);
+        },
+
+        dragEnd: function(event){
+            $scope.blockQueue = false;
+        },
+
+        orderChanged: function(event) {
+            var track = $scope.oldQueue[event.source.index];
+            var track2 = $scope.cachedQueue[event.source.index];
+            var dest = $scope.oldQueue[event.dest.index];
+            var dest2 = $scope.cachedQueue[event.dest.index];
+            if(track.album === track2.album
+                && track.artist === track2.artist
+                && track.id === track2.id
+                && dest.id === dest2.id
+                && dest.album === dest2.album
+                && dest.artist === dest2.artist) {
+                $http.get('/api/v1/move_queue_item/' + event.source.index + '/' + event.dest.index + '/')
+                    .success(function(response){
+                    $scope.queue = response['queue'];
+                });
+            } else {
+                jQuery.extend(true, $scope.queue, $scope.cachedQueue);
+            }
+        },
+
+        clone: false,
+        allowDuplicates: false
     };
 
     $scope.idFromTag = idFromTag;
@@ -342,6 +394,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
     };
 
     $interval(function() {$scope.loadData();}, 1000);
+    $scope.loadData();
 
 });
 

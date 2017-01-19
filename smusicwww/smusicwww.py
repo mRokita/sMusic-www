@@ -210,10 +210,29 @@ def api_v1_add_track_to_playlist(playlist_id, artist_id, album_id, track_id):
 def api_v1_del_track_from_playlist(playlist_id, track_num):
     return json.dumps(current_user.radio.del_track_from_playlist(playlist_id, track_num))
 
+
 @app.route('/api/v1/change_playlist_order/<playlist_id>/<source_index>/<dest_index>/')
 @music_control_perm.require(http_exception=403)
 def api_v1_change_playlist_order(playlist_id, source_index, dest_index):
     return json.dumps(current_user.radio.change_playlist_order(playlist_id, source_index, dest_index))
+
+
+@app.route('/api/v1/set_queue_position/<pos>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_set_queue_position(pos):
+    return json.dumps(current_user.radio.set_queue_position(pos))
+
+
+@app.route('/api/v1/del_from_queue/<pos>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_del_from_queue(pos):
+    return json.dumps(current_user.radio.del_from_queue(pos))
+
+@app.route('/api/v1/move_queue_item/<source_index>/<dest_index>/')
+@music_control_perm.require(http_exception=403)
+def api_v1_move_queue_item(source_index, dest_index):
+    return json.dumps(current_user.radio.move_queue_item(source_index, dest_index))
+
 
 @app.route('/api/v1/create_playlist/<playlist_name>/')
 @music_control_perm.require(http_exception=403)
@@ -226,9 +245,11 @@ def api_v1_create_playlist(playlist_name):
 def api_v1_del_playlist(playlist_id):
     return json.dumps(current_user.radio.del_playlist(playlist_id))
 
+
 @app.route('/api/v1/current_queue/')
 def api_v1_current_queue():
     return json.dumps(current_user.radio.get_current_queue())
+
 
 @app.route('/api/v1/search_track/<query>')
 @library_browse_perm.require(http_exception=403)
