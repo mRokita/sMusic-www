@@ -11,81 +11,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 <body data-ng-app="sMusic" data-ng-controller="{% block controller %}{% endblock %}">
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-cookies.js"></script>
-    <script type="text/javascript" src="/static/js/main.js"></script>
-    <script type="text/javascript" src="/static/ng-sortable/ng-sortable.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-cookies.js"></script>
+<script type="text/javascript" src="/static/js/main.js"></script>
+<script type="text/javascript" src="/static/ng-sortable/ng-sortable.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
 
 
-    <main class="row">
-        <div class="col s12 m12 l12">
-            <nav>
-                <div class="nav-wrapper blue">
-                    <a href="#" class="brand-logo center white-text">sMusic</a>
-                    <ul id="nav-mobile" style="margin-left:15px;" class="left">
-                            <li>{{ current_user.display_name }}</li>
-                    </ul>
-                    <ul id="nav-mobile" class="right">
-                        {% if radio_change_can %}
-                            <li><a class='dropdown-button' href="#" data-activates='dropdown1' data-beloworigin="true" data-alignment="right">{{ radio_current_name }}</a></li>
-                            <ul id='dropdown1' class='dropdown-content'>
-                                {% for radio in radios %}
-                                <li><a href="#!" data-ng-click="change_radio({{ radio.id }})">{{ radio.name }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        {% if not current_user.is_authenticated %}
-                            <li><a class='dropdown-button' href="#" data-activates='dropdown1' data-beloworigin="true" data-alignment="right">{{ radio_current_name }}</a></li>
-                            <ul id='dropdown1' class='dropdown-content'>
-                                {% for radio in radios %}
-                                <li><a href="#!" data-ng-click="change_radio_anonymous({{ radio.id }})">{{ radio.name }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        {% if current_user.is_authenticated %}
-                            <li><a style="text-decoration:none" href="/logout">Wyloguj</a></li>
-                        {% else %}
-                            <li><a style="text-decoration:none" href="/login">Zaloguj</a></li>
-                        {% endif %}
-                    </ul>
+<main class="row">
+
+
+    <div class="col s12 m12 l12">
+        <ul id="slide-out" class="side-nav fixed">
+            <li>
+                <div class="userView blue">
+                    <a href="/"><span class="blue white-text name center-align"><h2>sMusic</h2></span></a>
+                    <a><span class="white-text email right-align">{{ current_user.display_name }}</span></a>
                 </div>
-            </nav>
-        </div>
-        <div class="col s12 m12 l3">
-            {% block menu %}
-            {% set active_page = active_page|default('index') -%}
-            <div class="collection hide-on-small-only">
-                {% for href, id, caption in navigation_bar %}
-                    <a href="{{ href|e }}" class="collection-item
-                    {% if id == active_page %} active blue {% endif %}
-                    {% if id != active_page %}blue-text{% endif %}">{{ caption|e }}</a>
-                {% endfor %}
-            </div>
-            <span class="hide-on-med-and-up">
-                <ul id="dropdown2" class="dropdown-content" style="width:100%">
-                    {% for href, id, caption in navigation_bar %}
-                        <li><a href="{{ href|e }}" class="collection-item">{{ caption|e }}</a></li>
+            </li>
+            <li><a class="subheader">Sterowanie</a></li>
+
+            {% set active_page = active_page|default('index') %}
+
+            {% for href, id, caption in navigation_bar %}
+                <a href="{{ href|e }}" class="waves-effect
+                {% if id == active_page %}blue-text active {% endif %}
+                {% if id != active_page %}{% endif %}">{{ caption|e }}</a>
+            {% endfor %}
+            <li><a class="subheader">Wybierz radio</a></li>
+            {% if radio_change_can %}
+                <li><a class='dropdown-button' href="#" data-activates='dropdown1' data-beloworigin="true"
+                       data-alignment="right">{{ radio_current_name }}</a></li>
+                <ul id='dropdown1' class='dropdown-content'>
+                    {% for radio in radios %}
+                        <li><a href="#!" class="black-text" data-ng-click="change_radio({{ radio.id }})">{{ radio.name }}</a></li>
                     {% endfor %}
                 </ul>
-                <a class="btn dropdown-button" href="#!" data-activates="dropdown2" style="width:100%;margin-top:10px;margin-bottom:10px;">{% block dropdown_title %}{% endblock %}<i class="mdi-navigation-arrow-drop-down right"></i></a>
-            </span>
-            {% endblock %}
-            <div class="card-panel grey white-text center-align hide-on-med-and-down">
-                sMusic-www v{{ version }}
+            {% endif %}
+            {% if not current_user.is_authenticated %}
+                <li>
+                    <a class='dropdown-button' href="#" data-activates='dropdown1' data-beloworigin="true"
+                       data-alignment="right">
+                        {{ radio_current_name }}
+                    </a>
+                </li>
+                <ul id='dropdown1' class='dropdown-content'>
+                    {% for radio in radios %}
+                        <li>
+                            <a href="#!" data-ng-click="change_radio_anonymous({{ radio.id }})">{{ radio.name }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <li><a class="subheader">Konto</a></li>
+            {% if not current_user.is_authenticated %}
+                <li><a href="/login">Zaloguj</a></li>
+            {% else %}
+                <li><a href="/logout">Wyloguj</a></li>
+            {% endif %}
+        </ul>
+    <div class="col s12 m12 l12">
+        <nav style="margin-top:10px;">
+                <a id="activator" data-activates="slide-out" class="button-collapse hide-on-large-only"><i
+            class="material-icons">menu</i></a>
+            <div class="nav-wrapper black" >
+                {% block search %}
+                <form class="hide-on-large-only" action="/search/" method="GET">
+                    <div class="input-field hide-on-large-only" style="margin-left:60px;">
+                        <input id="search" name="q" type="search" placeholder="Przeszukaj bibliotekę" required>
+                        <label for="search" class="align-right"><i class="material-icons">search</i></label>
+                        <i class="material-icons">close</i>
+                    </div>
+                </form>
+                <form class="show-on-large-only" action="/search/" method="GET">
+                    <div class="input-field show-on-large-only">
+                        <input id="search" name="q" type="search" placeholder="Przeszukaj bibliotekę" required>
+                        <label for="search" class="align-right"><i class="material-icons">search</i></label>
+                        <i class="material-icons">close</i>
+                    </div>
+                    <input type="submit" style="position: absolute; left: -9999px"/>
+                </form>
+                {% endblock %}
             </div>
-        </div>
-        <div class="col s12 m12 l9">
-            {% block main %}{% endblock %}
-        </div>
-        <div class="col s12 m12 l12">
-            <div class="card-panel grey white-text center-align hide-on-large-only">
-                sMusic-www v{{ version }}
-            </div>
-        </div>
-    </main>
-    {% block script %}
-    {% endblock %}
+        </nav>
+
+
+        {% block main %}{% endblock %}
+    </div>
+    </div>
+</main>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#activator").sideNav();
+        console.log($("#activator"));
+    });
+
+</script>
+{% block script %}
+
+{% endblock %}
 </body>
 </html>
