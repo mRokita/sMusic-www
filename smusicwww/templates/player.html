@@ -44,7 +44,7 @@ Panel główny
                 <ul data-as-sortable="dragControlListeners" data-ng-model="queue" class="collection" >
                     <li data-as-sortable-item data-ng-repeat="track in queue">
                         <div data-as-sortable-item-handle data-ng-class="{true:'red-text', false:''}[track.is_current]" style="white-space:nowrap;" class="collection-item">{{ track.title }}&nbsp;&nbsp;<span class="grey-text hide-on-small-only"><small>- {{ track.artist }}&nbsp;-&nbsp;{{ track.album }} - [{{ track.length_readable }}]</small></span>
-                                <a class="secondary-content" style="position: absolute; right:0;">
+                                <a class="secondary-content card white" style="position: absolute;right:0;margin-top:-8px;padding-right:4px;padding-left:4px;padding-top:6px;">
                                     <i data-ng-click="setQueuePosition($index)" class="material-icons">play_circle_filled</i>&nbsp;&nbsp;<i data-ng-click="delFromQueue($index)" class="material-icons red-text">delete</i>
                                 </a>
                         </div>
