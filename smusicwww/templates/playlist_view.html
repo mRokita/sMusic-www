@@ -23,7 +23,7 @@
     <ul data-as-sortable="dragControlListeners" data-ng-model="playlist.tracks" class="collapsible" style="padding:0;margin:0;margin-top:5px;" data-collapsible="accordion">
 
         <li data-ng-repeat="track in playlist.tracks" data-as-sortable-item>
-            <div data-as-sortable-item-handle class="collapsible-header"><span data-ng-if="!isTouch"><a data-ng-href="/library/{{ track.artist_id }}/">{{ track.artist }}</a> - <a data-ng-href="/library/{{ track.artist_id }}/{{ track.album_id }}/">{{ track.album }}</a> - </span>{{track.title}}
+            <div data-as-sortable-item-handle class="collapsible-header"><span data-ng-if="!isTouch"><a data-ng-href="/library/{{ track.artist_id }}/">{{ track.artist }}</a> - <a data-ng-href="/library/{{ track.artist_id }}/{{ track.album_id }}/">{{ track.album }}</a> - </span>{{track.title}} <span class="grey-text">[{{ track.position_readable }}]</span>
             </div>
             <div class="collapsible-body">
                 <ul class="collection" style="border-radius: 0;">
