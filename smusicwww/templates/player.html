@@ -51,7 +51,10 @@ Panel główny
                     </li>
 
                 </ul>
-                <button class="waves-effect waves-light btn" data-ng-click="clearQueue()">WYCZYŚĆ</button>
+                <div class="align-left">
+                    <a class="btn waves-effect" data-ng-click="clearQueue()"><i class="material-icons">clear_all</i></a>
+                    <a class="btn waves-effect" data-ng-class="{true: 'grey', false: 'blue'}[isModeNormal()]" data-ng-click="toggleMode()"><i class="material-icons">{{ getModeIcon() }}</i></a>
+                </div>
             </div>
             <div class="card-panel white">
                 <h5 style="margin-top:0">Odtwarzacz</h5>

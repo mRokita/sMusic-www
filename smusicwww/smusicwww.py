@@ -171,10 +171,17 @@ def api_v1_status():
     return json.dumps(current_user.radio.get_status())
 
 
+@app.route('/api/v1/toggle_mode/')
+@music_control_perm.require(http_exception=403)
+def api_v1_toggle_mode():
+    return json.dumps(current_user.radio.toggle_mode())
+
+
 @app.route('/api/v1/clear_q_and_play/<artist_id>/<album_id>/<track_id>/')
 @music_control_perm.require(http_exception=403)
 def api_v1_clear_q_and_play(artist_id, album_id, track_id):
     return json.dumps(current_user.radio.clear_queue_and_play(artist_id, album_id, track_id))
+
 
 @app.route('/api/v1/clear_q_and_play_playlist/<playlist_id>/')
 @music_control_perm.require(http_exception=403)
@@ -209,7 +216,6 @@ def api_v1_add_track_to_playlist(playlist_id, artist_id, album_id, track_id):
 @music_control_perm.require(http_exception=403)
 def api_v1_del_track_from_playlist(playlist_id, track_num):
     return json.dumps(current_user.radio.del_track_from_playlist(playlist_id, track_num))
-
 
 @app.route('/api/v1/change_playlist_order/<playlist_id>/<source_index>/<dest_index>/')
 @music_control_perm.require(http_exception=403)

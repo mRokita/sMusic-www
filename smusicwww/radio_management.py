@@ -165,6 +165,9 @@ class Radio(db.Model):
     def pause(self):
         return self.send_request({"request": "pause"})
 
+    def toggle_mode(self):
+        return self.send_request({"request": "toggle_mode"})
+
     def add_download(self, method, url, artist=None, album=None, track=None):
         to_send = {"request": "add_download", "url": method + ";" + url}
         if artist is not None:

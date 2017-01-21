@@ -277,6 +277,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
             $scope.isFileLoaded = response['status'].hasOwnProperty('file');
             $scope.isLocked = response['status']['locked'];
             $scope.isPlaying = response['status']['status'] == "playing";
+            $scope.mode = response['status']['mode'];
             $scope.hideButtons = $scope.isLocked && !$scope.isPlaying;
             var newAlbumArtURL;
             if($scope.isFileLoaded) {
@@ -314,6 +315,26 @@ app.controller('playerStatus', function($scope, $http, $interval){
         });
     };
 
+    $scope.toggleMode = function(){
+        $http.get("/api/v1/toggle_mode/").success(function(response){
+            $scope.mode = response["mode"];
+        })
+    };
+
+    $scope.isModeNormal = function(){
+        return $scope.mode === "normal";
+    };
+
+    $scope.getModeIcon = function(){
+        switch ($scope.mode){
+            case "normal":
+                return "repeat";
+            case "repeat":
+                return "repeat";
+            case "repeat_one":
+                return "repeat_one"
+        }
+    };
     $scope.setQueuePosition = function(pos){
         $http.get('/api/v1/set_queue_position/' + pos +'/').success(function(response){
             $scope.queue = response["queue"];
