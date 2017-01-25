@@ -281,7 +281,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
             $scope.reloadQueue = $scope.downloadedQueueMd5 !== response['status']['queue_md5'];
             $scope.queueMd5 = response['status']['queue_md5'];
             $scope.isFileLoaded = response['status'].hasOwnProperty('file');
-            $scope.queuePosition = response['status']['queue_position'];
+            $scope.queuePosition = parseInt(response['status']['queue_position']);
             $scope.isLocked = response['status']['locked'];
             $scope.isPlaying = response['status']['status'] == "playing";
             $scope.mode = response['status']['mode'];
