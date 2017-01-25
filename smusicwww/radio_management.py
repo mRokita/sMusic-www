@@ -35,8 +35,8 @@ def un_escape(msg):
 def send_for_result(dct):
     conn = ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
     timeout = 2
-    if dct["request"] in ["get_artists", "get_tracks", "get_albums"]:
-        timeout = 6
+    if dct["request"] in ["get_artists", "get_tracks", "get_albums", "get_current_queue"]:
+        timeout = 10
     conn.settimeout(timeout)
     conn.connect(("127.0.0.1", config.listen_port))
     conn.read()
