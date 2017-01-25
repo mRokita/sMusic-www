@@ -270,13 +270,14 @@ app.controller('playerStatus', function($scope, $http, $interval){
     $scope.blockQueue = false;
     $scope.cachedQueue = null;
     $scope.queueMd5 = null;
+    $scope.downloadedQueueMd5 = null;
     $scope.reloadQueue = false;
     $scope.albumArtURL = "/static/images/nocover.jpg";
     $scope.loadData = function(status) {
         var loadFromStatus = function (response) {
             if (typeof response === "undefined") return;
             $scope.volume = response['status']['vol_left'];
-            $scope.reloadQueue = $scope.queueMd5 !== response['status']['queue_md5'];
+            $scope.reloadQueue = $scope.downloadedQueueMd5 !== response['status']['queue_md5'];
             $scope.queueMd5 = response['status']['queue_md5'];
             $scope.isFileLoaded = response['status'].hasOwnProperty('file');
             $scope.isLocked = response['status']['locked'];
@@ -324,6 +325,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
     $scope.toggleMode = function(){
         $http.get("/api/v1/toggle_mode/").success(function(response){
             $scope.mode = response["mode"];
+            $scope.downloadedQueueMd5 = $scope.queueMd5;
         })
     };
 
