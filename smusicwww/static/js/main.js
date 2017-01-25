@@ -319,6 +319,7 @@ app.controller('playerStatus', function($scope, $http, $interval){
             $http.get("/api/v1/current_queue/").success(function (response){
                 if(!$scope.blockQueue)
                     $scope.queue = response['queue'];
+                $scope.downloadedQueueMd5 = $scope.queueMd5;
                 $scope.cachedQueue = jQuery.extend(true, {}, response['queue']);
             });
         }
@@ -327,7 +328,6 @@ app.controller('playerStatus', function($scope, $http, $interval){
     $scope.toggleMode = function(){
         $http.get("/api/v1/toggle_mode/").success(function(response){
             $scope.mode = response["mode"];
-            $scope.downloadedQueueMd5 = $scope.queueMd5;
         })
     };
 
