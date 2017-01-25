@@ -39,23 +39,6 @@ Panel główny
             </div>
         </div>
         <div class="col l7 m6 s12">
-            <div class="card-panel white" data-ng-if="queue.length">
-                <h5 style="margin-top:0">Kolejka</h5>
-                <ul data-as-sortable="dragControlListeners" data-ng-model="queue" class="collection" >
-                    <li data-as-sortable-item data-ng-repeat="track in queue">
-                        <div data-as-sortable-item-handle data-ng-class="{true:'red-text', false:''}[$index === queuePosition]" style="white-space:nowrap;" class="collection-item">{{ track.title }}&nbsp;&nbsp;<span class="grey-text hide-on-small-only"><small>- {{ track.artist }}&nbsp;-&nbsp;{{ track.album }} - [{{ track.length_readable }}]</small></span>
-                                <a class="secondary-content card white" style="position: absolute;right:0;margin-top:-8px;padding-right:4px;padding-left:4px;padding-top:6px;">
-                                    <i data-ng-click="setQueuePosition($index)" class="material-icons">play_circle_filled</i>&nbsp;&nbsp;<i data-ng-click="delFromQueue($index)" class="material-icons red-text">delete</i>
-                                </a>
-                        </div>
-                    </li>
-
-                </ul>
-                <div class="align-left">
-                    <a class="btn waves-effect" data-ng-click="clearQueue()"><i class="material-icons">clear_all</i></a>
-                    <a class="btn waves-effect" data-ng-class="{true: 'grey', false: 'blue'}[isModeNormal()]" data-ng-click="toggleMode()"><i class="material-icons">{{ getModeIcon() }}</i></a>
-                </div>
-            </div>
             <div class="card-panel white">
                 <h5 style="margin-top:0">Odtwarzacz</h5>
                 <div class="center-align" style="position: relative">
@@ -79,6 +62,23 @@ Panel główny
                         <input type="range" id="volume" step="5" min="0" max="100" data-ng-model="volume" data-ng-change="updateVolume()" />
                     </p>
                 </form>
+            </div>
+            <div class="card-panel white" data-ng-if="queue.length">
+                <h5 style="margin-top:0">Kolejka</h5>
+                <ul data-as-sortable="dragControlListeners" data-ng-model="queue" class="collection" >
+                    <li data-as-sortable-item data-ng-repeat="track in queue">
+                        <div data-as-sortable-item-handle data-ng-class="{true:'red-text', false:''}[$index === queuePosition]" style="white-space:nowrap;" class="collection-item">{{ track.title }}&nbsp;&nbsp;<span class="grey-text hide-on-small-only"><small>- {{ track.artist }}&nbsp;-&nbsp;{{ track.album }} - [{{ track.length_readable }}]</small></span>
+                                <a class="secondary-content card white" style="position: absolute;right:0;margin-top:-8px;padding-right:4px;padding-left:4px;padding-top:6px;">
+                                    <i data-ng-click="setQueuePosition($index)" class="material-icons">play_circle_filled</i>&nbsp;&nbsp;<i data-ng-click="delFromQueue($index)" class="material-icons red-text">delete</i>
+                                </a>
+                        </div>
+                    </li>
+
+                </ul>
+                <div class="align-left">
+                    <a class="btn waves-effect" data-ng-click="clearQueue()"><i class="material-icons">clear_all</i></a>
+                    <a class="btn waves-effect" data-ng-class="{true: 'grey', false: 'blue'}[isModeNormal()]" data-ng-click="toggleMode()"><i class="material-icons">{{ getModeIcon() }}</i></a>
+                </div>
             </div>
         </div>
     </div>
